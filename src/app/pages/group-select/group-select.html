@@ -1,0 +1,25 @@
+<app-main-layout>
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Acceso</p>
+      <h1>Selecciona tu grupo</h1>
+      <p class="subtitle">Elige el espacio de trabajo al que quieres entrar.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <p-card *ngFor="let g of groups" [header]="g.nombre" class="group-card">
+      <div class="group-meta">
+        <p-tag [value]="g.nivel" severity="info"></p-tag>
+        <p class="muted">{{ g.descripcion }}</p>
+        <div class="stats">
+          <span>{{ g.integrantes }} integrantes</span>
+          <span>{{ g.tickets }} tickets</span>
+        </div>
+      </div>
+      <ng-template pTemplate="footer">
+        <button pButton type="button" label="Entrar" icon="pi pi-sign-in" (click)="select(g)"></button>
+      </ng-template>
+    </p-card>
+  </div>
+</app-main-layout>

@@ -1,0 +1,148 @@
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--erp-bg);
+}
+
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.25rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 980px;
+  border-radius: var(--erp-radius-lg);
+  box-shadow: var(--erp-card-shadow-strong);
+  border: 1px solid var(--erp-border);
+  background: #ffffff;
+  padding: 1rem 1rem 1.25rem;
+}
+
+:host ::ng-deep .auth-card .p-card-header {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--erp-ink);
+  padding-bottom: 0.35rem;
+}
+
+:host ::ng-deep .auth-card .p-card-subtitle {
+  color: var(--erp-muted);
+  font-weight: 600;
+  margin-top: -0.3rem;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 0 0.5rem 0.25rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0 0.5rem;
+  border-top: 1px solid rgba(228, 231, 238, 0.7);
+}
+
+.form-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.form-section h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--erp-ink);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-section h4 i {
+  color: var(--erp-primary);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--erp-ink);
+}
+
+:host ::ng-deep input[pInputText],
+:host ::ng-deep input[type='date'] {
+  height: 44px;
+  padding: 0 12px;
+  background: #f7fbff;
+  border: 1.5px solid var(--erp-border);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+:host ::ng-deep input[pInputText]:focus,
+:host ::ng-deep input[type='date']:focus {
+  border-color: var(--erp-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.p-error {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  color: #dc2626;
+}
+
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+:host ::ng-deep .p-button {
+  height: 46px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-main {
+    padding: 2.2rem 1rem;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .form-actions {
+    grid-template-columns: 1fr;
+  }
+}

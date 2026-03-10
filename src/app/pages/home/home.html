@@ -1,0 +1,83 @@
+<app-main-layout>
+  <section class="home-hero">
+    <div class="home-hero__text">
+      <p class="eyebrow">Bienvenido</p>
+      <h1>Panel principal</h1>
+      <p class="subtitle">Accede a grupos, usuarios y reportes desde un solo lugar.</p>
+      <div class="hero-actions">
+        <button pButton type="button" label="Ir al Dashboard" icon="pi pi-chart-line" routerLink="/dashboard"></button>
+        <button pButton type="button" label="Crear grupo" icon="pi pi-plus" class="p-button-success" routerLink="/groups"></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-grid">
+    <p-card *ngFor="let stat of stats" class="stat-card" [header]="stat.label">
+      <div class="stat-body">
+        <div class="stat-icon" [ngClass]="stat.tone">
+          <i [class]="stat.icon"></i>
+        </div>
+        <div>
+          <p class="stat-value">{{ stat.value }}</p>
+          <p class="stat-trend">{{ stat.trend }}</p>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="grid-2">
+    <p-card header="Atajos" class="list-card">
+      <div class="actions-list">
+        <button *ngFor="let action of quickActions" pButton type="button" [label]="action.label" [icon]="action.icon" class="p-button-text" [routerLink]="action.routerLink"></button>
+      </div>
+    </p-card>
+
+    <p-card header="Avances" class="progress-card">
+      <div class="progress-list">
+        <div *ngFor="let item of highlights" class="progress-row">
+          <div class="progress-text">
+            <p class="label">{{ item.title }}</p>
+            <p class="muted">{{ item.value }}% completado</p>
+          </div>
+          <p-progressBar [value]="item.value"></p-progressBar>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="grid-2">
+    <p-card header="Grupos" subheader="Actividad reciente" class="list-card">
+      <div class="list-row">
+        <div>
+          <p class="label">Nuevos</p>
+          <p class="stat-value">3</p>
+        </div>
+        <p-tag value="Revisión" severity="warn"></p-tag>
+      </div>
+      <div class="list-row">
+        <div>
+          <p class="label">Activos</p>
+          <p class="stat-value">8</p>
+        </div>
+        <p-tag value="Al día" severity="success"></p-tag>
+      </div>
+    </p-card>
+
+    <p-card header="Usuarios" subheader="Actividad reciente" class="list-card">
+      <div class="list-row">
+        <div>
+          <p class="label">Invitaciones</p>
+          <p class="stat-value">5</p>
+        </div>
+        <p-tag value="Pendientes" severity="warn"></p-tag>
+      </div>
+      <div class="list-row">
+        <div>
+          <p class="label">Activos hoy</p>
+          <p class="stat-value">27</p>
+        </div>
+        <p-tag value="Buen ritmo" severity="info"></p-tag>
+      </div>
+    </p-card>
+  </div>
+</app-main-layout>

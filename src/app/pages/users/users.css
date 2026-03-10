@@ -1,0 +1,103 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #22c55e;
+  margin: 0;
+}
+
+.page-header h1 {
+  margin: 0.15rem 0;
+  font-size: 1.6rem;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 0;
+  color: #6b7280;
+}
+
+.profile {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.profile-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.profile-main h2 {
+  margin: 0 0 0.1rem 0;
+}
+
+.profile-main .muted {
+  margin: 0;
+  color: #6b7280;
+}
+
+.badges {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-item label {
+  font-weight: 600;
+  color: #111827;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.profile-card,
+.form-card {
+  border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 900px) {
+  .profile {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+}

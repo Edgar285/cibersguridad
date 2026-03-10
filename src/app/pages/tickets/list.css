@@ -1,0 +1,9 @@
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.clickable-row {
+  cursor: pointer;
+}

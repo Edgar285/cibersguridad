@@ -1,0 +1,69 @@
+<app-main-layout>
+  <div class="dashboard">
+    <div class="dashboard__content" *ngIf="group(); else noGroup">
+      <div class="header">
+        <div>
+          <p class="eyebrow">Dashboard de grupo</p>
+          <h1>{{ group()?.nombre }}</h1>
+          <p class="lead">Resumen de tickets y actividad del espacio seleccionado.</p>
+        </div>
+        <div class="header-actions">
+          <button pButton type="button" label="Cambiar grupo" class="p-button-text" (click)="goSelect()"></button>
+          <button pButton type="button" label="Crear ticket" icon="pi pi-plus" class="p-button-success" (click)="goCreate()"></button>
+        </div>
+      </div>
+
+      <div class="stat-grid" *ngIf="stats() as s">
+        <p-card header="Tickets" class="stat-card">
+          <div class="stat-value">{{ s.total }}</div>
+          <p class="muted">Total en el grupo</p>
+        </p-card>
+        <p-card header="Pendientes" class="stat-card">
+          <div class="stat-value">{{ s.pending }}</div>
+        </p-card>
+        <p-card header="En progreso" class="stat-card">
+          <div class="stat-value">{{ s.inProgress }}</div>
+        </p-card>
+        <p-card header="Revisión" class="stat-card">
+          <div class="stat-value">{{ s.review }}</div>
+        </p-card>
+        <p-card header="Hechos" class="stat-card">
+          <div class="stat-value">{{ s.done }}</div>
+        </p-card>
+        <p-card header="Bloqueados" class="stat-card">
+          <div class="stat-value">{{ s.blocked }}</div>
+        </p-card>
+      </div>
+
+      <p-card header="Recientes" class="recent-card" *ngIf="stats()?.recent as recent">
+        <p-table [value]="recent" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Título</th>
+              <th>Estado</th>
+              <th>Asignado</th>
+              <th>Prioridad</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.title }}</td>
+              <td><p-tag [value]="row.status"></p-tag></td>
+              <td>{{ row.assignedTo || 'Sin asignar' }}</td>
+              <td>{{ row.priority }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+
+    <ng-template #noGroup>
+      <div class="dashboard__content">
+        <p class="eyebrow">Dashboard</p>
+        <h1>Selecciona un grupo</h1>
+        <p class="lead">Elige un espacio de trabajo para ver sus tickets y métricas.</p>
+        <p-button label="Elegir grupo" icon="pi pi-arrow-right" (onClick)="goSelect()"></p-button>
+      </div>
+    </ng-template>
+  </div>
+</app-main-layout>

@@ -1,1 +1,194 @@
-/* You can add global styles to this file, and also import other style files */
+@import "primeflex/primeflex.css";
+@import "primeicons/primeicons.css";
+
+:root {
+  --erp-primary: #22c55e;
+  --erp-primary-strong: #16a34a;
+  --erp-accent: #0ea5e9;
+  --erp-ink: #0b1224;
+  --erp-muted: #6b7280;
+  --erp-muted-2: #94a3b8;
+  --erp-bg: #f6f7fb;
+  --erp-surface: #ffffff;
+  --erp-surface-muted: #f8fafc;
+  --erp-surface-strong: #0f172a;
+  --erp-border: #e4e7ee;
+  --erp-border-strong: #cdd4e1;
+  --erp-card-shadow: 0 18px 50px rgba(11, 18, 36, 0.12);
+  --erp-card-shadow-strong: 0 24px 60px rgba(11, 18, 36, 0.18);
+  --erp-radius-md: 14px;
+  --erp-radius-lg: 18px;
+  --erp-gradient-dark: linear-gradient(115deg, #0f172a, #0b1224);
+  --erp-gradient-primary: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--erp-bg);
+  color: var(--erp-ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--erp-ink);
+}
+
+/* PrimeNG global theming */
+:root {
+  --p-inputtext-border-color: var(--erp-border);
+  --p-inputtext-focus-border-color: var(--erp-primary);
+  --p-button-bg: var(--erp-primary);
+  --p-button-hover-bg: var(--erp-primary-strong);
+  --p-button-text-color: #ffffff;
+  --p-card-bg: var(--erp-surface);
+  --p-card-border-color: var(--erp-border);
+}
+
+.p-component {
+  font-family: inherit;
+  color: var(--erp-ink);
+}
+
+.p-button {
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.24);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.p-button:focus-visible {
+  outline: 3px solid rgba(34, 197, 94, 0.35);
+  outline-offset: 2px;
+}
+
+.p-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.3);
+}
+
+.p-button.p-button-text {
+  color: var(--erp-ink);
+  box-shadow: none;
+  background: transparent;
+}
+
+.p-button.p-button-danger.p-button-text {
+  color: #dc2626;
+}
+
+.p-inputtext,
+.p-inputnumber-input,
+.p-select,
+.p-inputtextarea,
+textarea.p-inputtextarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1.5px solid var(--erp-border);
+  background: var(--erp-surface-muted);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.p-select .p-select-label {
+  padding: 0.75rem;
+}
+
+.p-inputtext:focus,
+.p-inputnumber-input:focus,
+.p-select:focus-within,
+.p-inputtextarea:focus,
+textarea.p-inputtextarea:focus {
+  border-color: var(--erp-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+  outline: none;
+}
+
+.p-card {
+  border-radius: var(--erp-radius-lg);
+  box-shadow: var(--erp-card-shadow);
+  border: 1px solid var(--erp-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), #ffffff);
+  overflow: hidden;
+}
+
+.p-dialog-mask,
+.p-drawer-mask {
+  background: rgba(11, 18, 36, 0.42);
+  backdrop-filter: blur(4px);
+}
+
+.p-dialog,
+.p-drawer {
+  border-radius: 20px;
+  box-shadow: var(--erp-card-shadow-strong);
+  border: 1px solid var(--erp-border);
+}
+
+.p-dialog-header,
+.p-dialog-content,
+.p-dialog-footer {
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+}
+
+.p-dialog-header {
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.p-dialog-footer {
+  border-top: 1px solid var(--erp-border);
+}
+
+.p-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.p-tag {
+  border-radius: 10px;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--erp-primary-strong);
+}
+
+.p-table {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--erp-border);
+}
+
+.p-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.p-table thead > tr > th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 0.9rem 0.75rem;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.p-table tbody > tr > td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eef2f7;
+  color: #111827;
+}
+
+.p-table tbody > tr:nth-child(odd) {
+  background: #fbfdff;
+}
+
+.p-table tbody > tr:hover {
+  background: #f0f7ff;
+}

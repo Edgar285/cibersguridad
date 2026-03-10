@@ -1,0 +1,105 @@
+
+.sidebar {
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: var(--erp-radius-lg);
+  padding: 1rem;
+  border: 1px solid var(--erp-border);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+  min-width: 240px;
+}
+
+.sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.sidebar-logo {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--erp-primary);
+  font-size: 1.05rem;
+}
+
+.sidebar-subtitle {
+  color: #475569;
+  font-size: 0.86rem;
+}
+
+.sidebar-version {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+.sidebar-menu {
+  --p-panelmenu-bg: #ffffff;
+  --p-panelmenu-color: #0f172a;
+  --p-panelmenu-border-color: var(--erp-border);
+}
+
+:host ::ng-deep .p-panelmenu .p-panelmenu-header > a {
+  background: #f8fafc;
+  border: 1px solid var(--erp-border);
+  color: #0f172a !important;
+  border-radius: 12px;
+  padding: 0.9rem 0.95rem;
+  transition: all 0.18s ease;
+  opacity: 1 !important;
+}
+
+:host ::ng-deep .p-panelmenu .p-panelmenu-header > a:hover {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #0f172a !important;
+  box-shadow: none;
+}
+
+:host ::ng-deep .p-panelmenu .p-panelmenu-content {
+  background: transparent;
+  border: none;
+  padding-left: 0.5rem;
+}
+
+:host ::ng-deep .p-panelmenu .p-menuitem-link {
+  border-radius: 10px;
+  color: #0f172a !important;
+  border: 1px solid var(--erp-border);
+  background: #ffffff;
+  padding: 0.85rem 0.95rem;
+  transition: all 0.16s ease;
+  opacity: 1 !important;
+}
+
+:host ::ng-deep .p-panelmenu .p-menuitem-link .p-menuitem-icon {
+  color: #0f172a !important;
+}
+
+:host ::ng-deep .p-panelmenu .p-menuitem-link .p-menuitem-text,
+:host ::ng-deep .p-panelmenu .p-panelmenu-header .p-menuitem-text {
+  color: #0f172a !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+:host ::ng-deep .p-panelmenu .p-menuitem-link:hover {
+  background: rgba(34, 197, 94, 0.12);
+  color: #0f172a !important;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+:host ::ng-deep .p-panelmenu .p-menuitem-link-active,
+:host ::ng-deep .p-panelmenu .p-menuitem-link.p-highlight {
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.24), rgba(14, 165, 233, 0.18));
+  color: #ffffff;
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.24);
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    min-width: 0;
+    height: 100%;
+  }
+}

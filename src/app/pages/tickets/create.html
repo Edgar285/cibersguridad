@@ -1,0 +1,93 @@
+<app-main-layout>
+  <p-toast></p-toast>
+
+  <section class="page-shell">
+    <div class="page-header">
+      <div>
+        <p class="eyebrow">Tickets</p>
+        <h1>Crear ticket</h1>
+        <p class="subtitle">Completa la información clave para arrancar.</p>
+      </div>
+      <div class="meta">
+        <span class="chip chip-success">Nuevo</span>
+        <small class="hint">Los campos con * son obligatorios.</small>
+      </div>
+    </div>
+
+    <div class="page-card">
+      <form [formGroup]="form" class="form-grid" (ngSubmit)="submit()">
+        <div class="form-item full" [class.invalid]="f.title.invalid && f.title.touched">
+          <label>Título *</label>
+          <input
+            pInputText
+            formControlName="title"
+            placeholder="Ej. Integrar pasarela de pagos"
+            autocomplete="off"
+          />
+          <div class="field-error" *ngIf="f.title.invalid && f.title.touched">El título es obligatorio.</div>
+        </div>
+
+        <div class="form-item full" [class.invalid]="f.description.invalid && f.description.touched">
+          <label>Descripción *</label>
+          <p-textarea
+            formControlName="description"
+            rows="3"
+            placeholder="Contexto, alcance y criterio de éxito"
+          ></p-textarea>
+          <div class="field-error" *ngIf="f.description.invalid && f.description.touched">
+            Describe brevemente el ticket.
+          </div>
+        </div>
+
+        <div class="form-item">
+          <label>Estado</label>
+          <p-select
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="status"
+            placeholder="Selecciona el estado"
+          ></p-select>
+        </div>
+
+        <div class="form-item">
+          <label>Prioridad</label>
+          <p-select
+            [options]="priorityOptions"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="priority"
+            placeholder="Selecciona la prioridad"
+          ></p-select>
+        </div>
+
+        <div class="form-item">
+          <label>Asignado a</label>
+          <input pInputText formControlName="assignedTo" placeholder="correo o responsable" />
+        </div>
+
+        <div class="form-item">
+          <label>Fecha límite</label>
+          <p-datepicker
+            formControlName="dueDate"
+            dateFormat="dd/mm/yy"
+            showIcon="true"
+            placeholder="DD/MM/AAAA"
+          ></p-datepicker>
+        </div>
+
+        <div class="actions">
+          <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancel()"></button>
+          <button
+            pButton
+            type="submit"
+            label="Crear ticket"
+            icon="pi pi-save"
+            class="p-button-success"
+            [disabled]="form.invalid"
+          ></button>
+        </div>
+      </form>
+    </div>
+  </section>
+</app-main-layout>

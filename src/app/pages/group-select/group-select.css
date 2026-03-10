@@ -1,0 +1,18 @@
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.group-card .group-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.group-card .stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #475569;
+}

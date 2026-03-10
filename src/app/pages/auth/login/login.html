@@ -1,0 +1,45 @@
+<div class="auth-shell">
+  <app-header></app-header>
+
+  <main class="auth-main">
+    <p-toast></p-toast>
+    <p-card class="auth-card" header="Bienvenido" subheader="Inicia sesión en tu cuenta">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <div class="form-group">
+          <label class="form-label" for="userOrEmail">Usuario o Email</label>
+          <input 
+            id="userOrEmail"
+            type="text"
+            formControlName="userOrEmail" 
+            pInputText
+            placeholder="Ingresa tu usuario o email"
+          />
+          <small class="p-error" *ngIf="c('userOrEmail').touched && c('userOrEmail').invalid">
+            Campo requerido
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            pInputText
+            placeholder="Ingresa tu contraseña"
+          />
+          <small class="p-error" *ngIf="c('password').touched && c('password').invalid">
+            Campo requerido
+          </small>
+        </div>
+
+        <div class="form-actions">
+          <p-button type="submit" label="Entrar" [disabled]="form.invalid" styleClass="p-button-success p-button-lg w-full"></p-button>
+          <p-button type="button" label="Crear cuenta" severity="secondary" styleClass="p-button-outlined p-button-lg w-full" routerLink="/auth/register"></p-button>
+        </div>
+      </form>
+    </p-card>
+  </main>
+
+  <app-footer></app-footer>
+</div>

@@ -1,0 +1,32 @@
+.app-footer {
+  background: var(--erp-gradient-dark);
+  color: #cbd5e1;
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2.5rem;
+  min-height: 90px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  color: #e2e8f0;
+}
+
+.footer-brand {
+  color: var(--erp-primary);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.footer-sub {
+  font-size: 1.05rem;
+}
+
+.footer-right {
+  color: #cbd5e1;
+  font-size: 1.05rem;
+}
+

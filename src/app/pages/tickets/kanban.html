@@ -1,0 +1,71 @@
+<app-main-layout>
+  <p-toast></p-toast>
+
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Tablero</p>
+      <h1>Kanban de tickets</h1>
+      <p class="subtitle">Arrastra visualmente los estados (usa botones rápidos para mover).</p>
+    </div>
+  </div>
+
+  <app-quick-filters
+    [filters]="[
+      { key: 'mine', label: 'Mis tickets' },
+      { key: 'unassigned', label: 'Sin asignar' },
+      { key: 'high', label: 'Prioridad alta' }
+    ]"
+    [active]="filter()"
+    (change)="filter.set($event)"></app-quick-filters>
+
+  <div class="board">
+    <div class="column" *ngFor="let col of statuses">
+      <div class="column-header">
+        <h3>{{ col.label }}</h3>
+      </div>
+      <div class="cards">
+        <p-card *ngFor="let t of grouped()[col.value]" class="ticket-card" (click)="openDetail(t)">
+          <div class="ticket-title">{{ t.title }}</div>
+          <p-tag [value]="t.status"></p-tag>
+          <div class="meta">
+            <span>{{ t.assignedTo || 'Sin asignar' }}</span>
+            <span>{{ t.priority }}</span>
+          </div>
+          <button pButton type="button" label="Mover" class="p-button-text" (click)="$event.stopPropagation(); moveNext(t)"></button>
+        </p-card>
+      </div>
+    </div>
+  </div>
+
+  <p-dialog [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '520px' }" [dismissableMask]="true">
+    <ng-container *ngIf="selectedTicket() as ticket">
+      <h3>{{ ticket.title }}</h3>
+      <p class="muted">Creado: {{ ticket.createdAt | date: 'short' }}</p>
+      <p>{{ ticket.description }}</p>
+
+      <div class="field-row">
+        <label>Estado</label>
+        <p-select
+          [options]="statuses"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="ticket.status"
+          (onChange)="changeStatus(ticket, $event.value)"></p-select>
+      </div>
+
+      <div class="field-row">
+        <label>Prioridad</label>
+        <p-select
+          [options]="priorities"
+          [ngModel]="ticket.priority"
+          (onChange)="updatePriority(ticket, $event.value)"></p-select>
+      </div>
+
+      <div class="field-row">
+        <label>Asignado</label>
+        <span>{{ ticket.assignedTo || 'Sin asignar' }}</span>
+        <button pButton type="button" label="Asignarme" class="p-button-text" (click)="assignMe(ticket)"></button>
+      </div>
+    </ng-container>
+  </p-dialog>
+</app-main-layout>

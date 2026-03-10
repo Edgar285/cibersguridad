@@ -1,0 +1,10 @@
+.perm-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.perm-list p-tag {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}

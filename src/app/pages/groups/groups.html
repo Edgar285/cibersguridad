@@ -1,0 +1,161 @@
+<app-main-layout>
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="page-wrapper">
+    <div class="page-header">
+    <div>
+      <p class="eyebrow">Grupos</p>
+      <h1>Gestión de grupos</h1>
+      <p class="subtitle">CRUD completo con estados Success / Agree / X.</p>
+    </div>
+    <button
+      *appHasPermission="[permission.GroupsAdd, permission.GroupAdd]; appHasPermissionMode: 'any'"
+      pButton
+      type="button"
+      label="Nuevo grupo"
+      icon="pi pi-plus"
+      class="p-button-success"
+      (click)="openCreate()"></button>
+    </div>
+
+    <div class="stats-grid">
+      <p-card *ngFor="let card of stats()" class="stat-card" [header]="card.label">
+        <div class="stat-body">
+          <div class="stat-icon" [ngClass]="card.tone">
+            <i [class]="card.icon"></i>
+          </div>
+          <span class="stat-value">{{ card.value }}</span>
+        </div>
+      </p-card>
+    </div>
+
+    <p-card header="Listado" class="list-card">
+      <p-table [value]="groups()" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nombre</th>
+            <th>Actor</th>
+            <th>Nivel</th>
+            <th>Integrantes</th>
+            <th>Tickets</th>
+            <th>Estado</th>
+            <th>Descripción</th>
+            <th style="width: 120px">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.nombre }}</td>
+            <td>{{ row.actor }}</td>
+            <td>{{ row.nivel }}</td>
+            <td>{{ row.integrantes }}</td>
+            <td>{{ row.tickets }}</td>
+            <td>
+              <p-tag [value]="row.estado | titlecase" [severity]="severity(row.estado)"></p-tag>
+            </td>
+            <td>{{ row.descripcion }}</td>
+            <td class="actions">
+              <button
+                *appHasPermission="permission.GroupsEdit"
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-text"
+                (click)="openEdit(row)"
+                aria-label="Editar"></button>
+              <button
+                *appHasPermission="[permission.GroupsDelete, permission.GroupDelete]; appHasPermissionMode: 'any'"
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger"
+                (click)="confirmDelete(row)"
+                aria-label="Eliminar"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+
+  <p-card header="Usuarios del grupo" class="list-card">
+    <div class="member-actions">
+      <input pInputText #email placeholder="usuario@correo.com" />
+      <button
+        *appHasPermission="permission.GroupsAdd"
+        pButton
+        type="button"
+        label="Agregar"
+        icon="pi pi-user-plus"
+        (click)="addMember(email.value); email.value = ''"></button>
+    </div>
+    <ul class="member-list">
+      <li *ngFor="let m of members()">
+        {{ m }}
+        <button
+          *appHasPermission="permission.GroupDelete"
+          pButton
+          type="button"
+          icon="pi pi-times"
+          class="p-button-text p-button-danger"
+          (click)="removeMember(m)"></button>
+      </li>
+    </ul>
+  </p-card>
+
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [style]="{ width: '540px' }"
+    styleClass="group-dialog"
+    [closable]="false"
+    [draggable]="false">
+    <ng-template pTemplate="header">
+      <div class="dialog-header">
+        <span class="dialog-title">{{ editingId ? 'Editar grupo' : 'Nuevo grupo' }}</span>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-item">
+          <label>Nombre</label>
+          <input pInputText formControlName="nombre" />
+        </div>
+        <div class="form-item">
+          <label>Actor</label>
+          <input pInputText formControlName="actor" />
+        </div>
+        <div class="form-item">
+          <label>Nivel</label>
+          <input pInputText formControlName="nivel" />
+        </div>
+        <div class="form-item">
+          <label>Integrantes</label>
+          <p-inputNumber formControlName="integrantes" [min]="1" inputId="integrantes"></p-inputNumber>
+        </div>
+        <div class="form-item">
+          <label>Tickets</label>
+          <p-inputNumber formControlName="tickets" [min]="0" inputId="tickets"></p-inputNumber>
+        </div>
+        <div class="form-item">
+          <label>Estado</label>
+          <p-select formControlName="estado" [options]="stateOptions" optionLabel="label" optionValue="value"></p-select>
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label>Descripción</label>
+        <textarea pInputTextarea formControlName="descripcion" rows="3"></textarea>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="dialog-footer">
+        <button pButton type="button" label="Cancelar" class="p-button-text" (click)="dialogVisible = false"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-save" class="p-button-success" (click)="save()"></button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</app-main-layout>

@@ -1,0 +1,56 @@
+<app-main-layout>
+  <p-toast></p-toast>
+  <div *ngIf="ticket; else missing">
+    <div class="page-header">
+      <div>
+        <p class="eyebrow">Ticket</p>
+        <h1>{{ ticket.title }}</h1>
+        <p class="subtitle">Detalle y cambios.</p>
+      </div>
+      <div class="header-actions">
+        <button pButton type="button" label="Asignarme" class="p-button-text" (click)="assignMe()"></button>
+        <button pButton type="button" label="Eliminar" class="p-button-danger p-button-text" (click)="delete()"></button>
+      </div>
+    </div>
+
+    <p-card>
+      <div class="grid">
+        <div>
+          <h4>Estado</h4>
+          <p-select
+            [options]="statuses"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="ticket.status"
+            (onChange)="updateStatus($event.value)"></p-select>
+        </div>
+        <div>
+          <h4>Prioridad (中文)</h4>
+          <p-select
+            [options]="priorities"
+            [ngModel]="ticket.priority"
+            (onChange)="updatePriority($event.value)"></p-select>
+        </div>
+        <div>
+          <h4>Asignado a</h4>
+          <p>{{ ticket.assignedTo || 'Sin asignar' }}</p>
+        </div>
+        <div>
+          <h4>Fechas</h4>
+          <p>Creado: {{ ticket.createdAt | date: 'short' }}</p>
+          <p *ngIf="ticket.dueDate">Límite: {{ ticket.dueDate | date: 'shortDate' }}</p>
+        </div>
+      </div>
+
+      <h4>Descripción</h4>
+      <p class="description">{{ ticket.description }}</p>
+
+      <h4>Actividad</h4>
+      <p class="muted">Historial simplificado (mock): cambios quedan registrados en memoria.</p>
+    </p-card>
+  </div>
+
+  <ng-template #missing>
+    <p-card>Ticket no encontrado.</p-card>
+  </ng-template>
+</app-main-layout>

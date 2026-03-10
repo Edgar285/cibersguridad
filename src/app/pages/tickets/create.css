@@ -1,0 +1,123 @@
+:host {
+  display: block;
+}
+
+.page-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  color: #5b6178;
+  margin: 0.35rem 0 0;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-end;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.chip-success {
+  background: #e8f7ec;
+  color: #0c8a3c;
+}
+
+.hint {
+  color: #7a7f92;
+}
+
+.page-card {
+  background: #ffffff;
+  border: 1px solid #e8e8ec;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-item.full {
+  grid-column: 1 / -1;
+}
+
+.form-item.invalid label {
+  color: #c0392b;
+}
+
+.form-item.invalid :is(input[pInputText], p-textarea, p-select, p-datepicker) {
+  border-color: #e67e22;
+  box-shadow: 0 0 0 1px #f1c40f33;
+}
+
+label {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+input[pInputText],
+p-textarea,
+p-select,
+p-datepicker {
+  width: 100%;
+}
+
+:host ::ng-deep .p-select,
+:host ::ng-deep .p-inputtext,
+:host ::ng-deep .p-textarea,
+:host ::ng-deep .p-datepicker {
+  width: 100%;
+}
+
+.field-error {
+  color: #c0392b;
+  font-size: 0.85rem;
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .meta {
+    align-items: flex-start;
+  }
+}

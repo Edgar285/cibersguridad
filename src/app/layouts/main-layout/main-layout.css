@@ -1,0 +1,67 @@
+
+.shell {
+  background: var(--erp-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-layout {
+  display: flex;
+  padding: 2.25rem;
+  gap: 2rem;
+  flex: 1;
+  max-width: 1800px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.sidebar-fixed {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+}
+
+.main-layout__content {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), #ffffff);
+  border-radius: var(--erp-radius-lg);
+  box-shadow: var(--erp-card-shadow);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  border: 1px solid var(--erp-border);
+}
+
+.sidebar-toggle {
+  display: none;
+  align-self: flex-start;
+  margin-bottom: 0.25rem;
+  border-radius: 10px;
+  background: var(--erp-surface-muted);
+  color: var(--erp-ink);
+  border: 1px solid var(--erp-border);
+}
+
+.sidebar-toggle:hover {
+  background: #ffffff;
+  border-color: var(--erp-border-strong);
+}
+
+@media (max-width: 1180px) {
+  .main-layout {
+    padding: 1.25rem;
+    flex-direction: column;
+  }
+
+  .sidebar-fixed {
+    position: relative;
+    top: 0;
+    width: 100%;
+  }
+}

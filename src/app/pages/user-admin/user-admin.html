@@ -1,0 +1,40 @@
+<app-main-layout>
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Super Admin</p>
+      <h1>Gestión de usuarios y permisos</h1>
+      <p class="subtitle">CRUD básico y asignación de permisos.</p>
+    </div>
+  </div>
+
+  <p-card>
+    <p-table [value]="users" selectionMode="single" [(selection)]="selectedUser" (onRowSelect)="select(selectedUser)">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Permisos</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr [pSelectableRow]="row">
+          <td>{{ row.username }}</td>
+          <td>{{ row.email }}</td>
+          <td>
+            <p-tag *ngFor="let p of row.permissions" [value]="p" styleClass="mr-2"></p-tag>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <p-card *ngIf="selectedUser" header="Permisos del usuario">
+    <div class="perm-actions">
+      <p-select [options]="allPerms" placeholder="Permiso" [(ngModel)]="selectedPerm"></p-select>
+      <button pButton type="button" label="Agregar" icon="pi pi-plus" (click)="addPermission()"></button>
+    </div>
+    <div class="perm-list">
+      <p-tag *ngFor="let p of selectedUser.permissions" [value]="p" icon="pi pi-times" (onIconClick)="removePermission(p)"></p-tag>
+    </div>
+  </p-card>
+</app-main-layout>
