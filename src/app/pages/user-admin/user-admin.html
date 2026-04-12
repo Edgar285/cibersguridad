@@ -1,40 +1,122 @@
 <app-main-layout>
+  <p-toast></p-toast>
+
+  <!-- Banner solo lectura para Admin (no SuperAdmin) -->
+  <div *ngIf="!isSuperAdmin" class="readonly-banner">
+    <i class="pi pi-info-circle"></i>
+    <span>Estás en modo <strong>solo lectura</strong>. Solo el Super Admin puede crear, editar o eliminar usuarios.</span>
+  </div>
+
   <div class="page-header">
     <div>
       <p class="eyebrow">Super Admin</p>
       <h1>Gestión de usuarios y permisos</h1>
-      <p class="subtitle">CRUD básico y asignación de permisos.</p>
+      <p class="subtitle">Administra cuentas y asigna permisos de forma clara.</p>
+    </div>
+    <div class="header-actions">
+      <div class="chips">
+        <p-tag value="Admins" severity="info"></p-tag>
+        <p-tag value="Super" severity="success"></p-tag>
+      </div>
+      <button *ngIf="canCreate()" pButton type="button" label="Nuevo usuario" icon="pi pi-plus" (click)="newUser()"></button>
     </div>
   </div>
 
-  <p-card>
-    <p-table [value]="users" selectionMode="single" [(selection)]="selectedUser" (onRowSelect)="select(selectedUser)">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Usuario</th>
-          <th>Email</th>
-          <th>Permisos</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr [pSelectableRow]="row">
-          <td>{{ row.username }}</td>
-          <td>{{ row.email }}</td>
-          <td>
-            <p-tag *ngFor="let p of row.permissions" [value]="p" styleClass="mr-2"></p-tag>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
+  <div class="layout-grid">
+    <p-card class="list-card" header="Usuarios">
+      <p-table
+        [value]="users"
+        selectionMode="single"
+        [(selection)]="selectedUser"
+        dataKey="email"
+        (onRowSelect)="select($event.data)"
+        responsiveLayout="scroll"
+        [tableStyle]="{ 'min-width': '500px' }">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th class="actions-col">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr [pSelectableRow]="row">
+            <td>
+              <div class="user-cell">
+                <p-avatar icon="pi pi-user" shape="circle" size="normal"></p-avatar>
+                <span class="title">{{ row.username }}</span>
+              </div>
+            </td>
+            <td class="muted">{{ row.email }}</td>
+            <td class="actions-col">
+              <button *ngIf="canUpdate()" pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" pTooltip="Editar" (click)="select(row)"></button>
+              <button *ngIf="canDelete()" pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Eliminar" (click)="delete(row)"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
 
-  <p-card *ngIf="selectedUser" header="Permisos del usuario">
-    <div class="perm-actions">
-      <p-select [options]="allPerms" placeholder="Permiso" [(ngModel)]="selectedPerm"></p-select>
-      <button pButton type="button" label="Agregar" icon="pi pi-plus" (click)="addPermission()"></button>
+  <!-- ===== MODAL DE USUARIO ===== -->
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="{ width: '540px', borderRadius: '20px' }"
+    [header]="selectedUser ? 'Editar: ' + selectedUser.username : 'Nuevo usuario'">
+
+    <!-- Campos básicos -->
+    <div class="modal-fields">
+      <div class="field-group">
+        <div class="modal-field">
+          <label><i class="pi pi-user"></i> Usuario</label>
+          <input pInputText [(ngModel)]="form.username" placeholder="jdoe" />
+        </div>
+        <div class="modal-field">
+          <label><i class="pi pi-envelope"></i> Email</label>
+          <input pInputText [(ngModel)]="form.email" placeholder="user@mail.com" />
+        </div>
+      </div>
+      <div class="modal-field">
+        <label><i class="pi pi-lock"></i> Contraseña</label>
+        <input pInputText type="password" [(ngModel)]="form.password" placeholder="(deja en blanco para mantener)" />
+      </div>
     </div>
-    <div class="perm-list">
-      <p-tag *ngFor="let p of selectedUser.permissions" [value]="p" icon="pi pi-times" (onIconClick)="removePermission(p)"></p-tag>
+
+    <!-- Permisos -->
+    <div class="perms-section">
+      <p class="perms-title"><i class="pi pi-shield"></i> Permisos</p>
+      <div class="perm-categories">
+        <div class="perm-category" *ngFor="let cat of permsByCategory; let i = index" [attr.data-cat]="i">
+          <div class="perm-cat-header">
+            <i [class]="cat.icon"></i>
+            <span>{{ cat.label }}</span>
+          </div>
+          <div class="perm-checks">
+            <label
+              *ngFor="let p of cat.perms"
+              class="perm-check-item"
+              [class.perm-active]="hasPerm(p)"
+              (click)="togglePerm(p)">
+              <span class="perm-check-box">
+                <i class="pi" [class.pi-check]="hasPerm(p)" [class.pi-minus]="!hasPerm(p)"></i>
+              </span>
+              <span class="perm-check-label">{{ p }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
-  </p-card>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-footer">
+        <div class="muted" *ngIf="selectedUser">Editando: {{ selectedUser.username }}</div>
+        <span class="spacer"></span>
+        <button pButton type="button" label="Cancelar" class="p-button-text" (click)="dialogVisible = false"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-save" class="p-button-success" [disabled]="!canSave()" (click)="save()"></button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
 </app-main-layout>

@@ -1,69 +1,258 @@
 <app-main-layout>
-  <div class="dashboard">
-    <div class="dashboard__content" *ngIf="group(); else noGroup">
-      <div class="header">
+  <div class="dash-page">
+
+    <!-- ===== CABECERA ===== -->
+    <div class="dash-header">
+      <div class="dash-greeting">
+        <p class="eyebrow">Panel principal</p>
+        <h1>Hola, {{ currentUser()?.username ?? 'Usuario' }} 👋</h1>
+        <p class="lead">
+          <ng-container *ngIf="group(); else noGroupLead">
+            Estás en <strong>{{ group()!.nombre }}</strong> &mdash; Ve tickets, métricas y acciones rápidas.
+          </ng-container>
+          <ng-template #noGroupLead>Selecciona un grupo para ver sus tickets y métricas.</ng-template>
+        </p>
+      </div>
+      <div class="dash-header-actions">
+
+        <!-- Switch toggle Resumen / Kanban -->
+        <div class="view-switch" *ngIf="group()">
+          <span class="vs-label" [class.vs-active]="activeView() === 'dashboard'">
+            <i class="pi pi-chart-bar"></i> Resumen
+          </span>
+          <label class="vs-track" [class.vs-on]="activeView() === 'kanban'">
+            <input type="checkbox" [checked]="activeView() === 'kanban'"
+              (change)="activeView.set(activeView() === 'kanban' ? 'dashboard' : 'kanban')">
+            <span class="vs-thumb"></span>
+          </label>
+          <span class="vs-label" [class.vs-active]="activeView() === 'kanban'">
+            <i class="pi pi-th-large"></i> Kanban
+          </span>
+        </div>
+
+        <button pButton type="button" label="Cambiar grupo" icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="goSelect()"></button>
+        <button pButton type="button" label="Crear ticket" icon="pi pi-plus" class="p-button-success p-button-sm" (click)="goCreate()"></button>
+      </div>
+    </div>
+
+    <!-- ===== STATS GLOBALES ===== -->
+    <div class="global-stats">
+      <div class="global-stat-card" *ngFor="let s of globalStats">
+        <div class="gsc-icon" [style.background]="s.color + '18'" [style.color]="s.color">
+          <i [class]="s.icon"></i>
+        </div>
         <div>
-          <p class="eyebrow">Dashboard de grupo</p>
-          <h1>{{ group()?.nombre }}</h1>
-          <p class="lead">Resumen de tickets y actividad del espacio seleccionado.</p>
+          <p class="gsc-value">{{ s.value }}</p>
+          <p class="gsc-label">{{ s.label }}</p>
         </div>
-        <div class="header-actions">
-          <button pButton type="button" label="Cambiar grupo" class="p-button-text" (click)="goSelect()"></button>
-          <button pButton type="button" label="Crear ticket" icon="pi pi-plus" class="p-button-success" (click)="goCreate()"></button>
+      </div>
+    </div>
+
+    <!-- ===== CONTENIDO PRINCIPAL CON GRUPO ===== -->
+    <ng-container *ngIf="group(); else noGroupState">
+
+      <!-- ===== VISTA RESUMEN ===== -->
+      <ng-container *ngIf="activeView() === 'dashboard'">
+
+      <!-- Stats de tickets -->
+      <div class="ticket-stats" *ngIf="ticketStats() as s">
+        <div class="ts-card ts-total">
+          <p class="ts-num">{{ s.total }}</p>
+          <p class="ts-lbl">Total</p>
+        </div>
+        <div class="ts-card ts-pending">
+          <p class="ts-num">{{ s.pending }}</p>
+          <p class="ts-lbl">Pendientes</p>
+        </div>
+        <div class="ts-card ts-progress">
+          <p class="ts-num">{{ s.inProgress }}</p>
+          <p class="ts-lbl">En progreso</p>
+        </div>
+        <div class="ts-card ts-review">
+          <p class="ts-num">{{ s.review }}</p>
+          <p class="ts-lbl">Revisión</p>
+        </div>
+        <div class="ts-card ts-done">
+          <p class="ts-num">{{ s.done }}</p>
+          <p class="ts-lbl">Completados</p>
+        </div>
+        <div class="ts-card ts-blocked">
+          <p class="ts-num">{{ s.blocked }}</p>
+          <p class="ts-lbl">Bloqueados</p>
         </div>
       </div>
 
-      <div class="stat-grid" *ngIf="stats() as s">
-        <p-card header="Tickets" class="stat-card">
-          <div class="stat-value">{{ s.total }}</div>
-          <p class="muted">Total en el grupo</p>
+      <!-- Fila media: acciones rápidas + progreso -->
+      <div class="mid-row">
+        <p-card header="Acciones rápidas" class="quick-card">
+          <div class="quick-grid">
+            <button
+              *ngFor="let a of quickActions"
+              pButton
+              type="button"
+              [label]="a.label"
+              [icon]="a.icon"
+              class="p-button-outlined quick-btn"
+              (click)="a.action ? a.action() : null"
+              [routerLink]="a.route ?? null"
+            ></button>
+          </div>
         </p-card>
-        <p-card header="Pendientes" class="stat-card">
-          <div class="stat-value">{{ s.pending }}</div>
-        </p-card>
-        <p-card header="En progreso" class="stat-card">
-          <div class="stat-value">{{ s.inProgress }}</div>
-        </p-card>
-        <p-card header="Revisión" class="stat-card">
-          <div class="stat-value">{{ s.review }}</div>
-        </p-card>
-        <p-card header="Hechos" class="stat-card">
-          <div class="stat-value">{{ s.done }}</div>
-        </p-card>
-        <p-card header="Bloqueados" class="stat-card">
-          <div class="stat-value">{{ s.blocked }}</div>
+
+        <p-card header="Progreso del grupo" class="progress-card">
+          <div class="progress-list">
+            <div class="progress-row" *ngFor="let h of highlights">
+              <div class="pr-label-row">
+                <span>{{ h.title }}</span>
+                <span class="pr-pct">{{ highlightValue(h.title) }}%</span>
+              </div>
+              <p-progressBar [value]="highlightValue(h.title)" [showValue]="false"></p-progressBar>
+            </div>
+          </div>
         </p-card>
       </div>
 
-      <p-card header="Recientes" class="recent-card" *ngIf="stats()?.recent as recent">
+      <!-- Tickets recientes -->
+      <p-card header="Tickets recientes" class="table-card" *ngIf="ticketStats()?.recent as recent">
         <p-table [value]="recent" responsiveLayout="scroll">
           <ng-template pTemplate="header">
             <tr>
               <th>Título</th>
               <th>Estado</th>
-              <th>Asignado</th>
+              <th>Asignado a</th>
               <th>Prioridad</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
-            <tr>
+            <tr class="table-row" [routerLink]="['/tickets', row.id]">
               <td>{{ row.title }}</td>
-              <td><p-tag [value]="row.status"></p-tag></td>
-              <td>{{ row.assignedTo || 'Sin asignar' }}</td>
+              <td><p-tag [value]="row.status" [severity]="statusSeverity(row.status)"></p-tag></td>
+              <td>{{ row.assignedTo || '—' }}</td>
+              <td>{{ row.priority }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="4" class="empty-msg">Sin tickets recientes</td></tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+
+      <!-- Asignados a mí -->
+      <p-card header="Asignados a mí" class="table-card" *ngIf="assignedToMe().length">
+        <p-table [value]="assignedToMe()" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Título</th>
+              <th>Estado</th>
+              <th>Prioridad</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr class="table-row" [routerLink]="['/tickets', row.id]">
+              <td>{{ row.title }}</td>
+              <td><p-tag [value]="row.status" [severity]="statusSeverity(row.status)"></p-tag></td>
               <td>{{ row.priority }}</td>
             </tr>
           </ng-template>
         </p-table>
       </p-card>
-    </div>
 
-    <ng-template #noGroup>
-      <div class="dashboard__content">
-        <p class="eyebrow">Dashboard</p>
-        <h1>Selecciona un grupo</h1>
-        <p class="lead">Elige un espacio de trabajo para ver sus tickets y métricas.</p>
-        <p-button label="Elegir grupo" icon="pi pi-arrow-right" (onClick)="goSelect()"></p-button>
+      </ng-container><!-- /vista resumen -->
+
+      <!-- ===== VISTA KANBAN ===== -->
+      <ng-container *ngIf="activeView() === 'kanban'">
+        <p-toast></p-toast>
+
+        <app-quick-filters
+          *ngIf="isPrivileged"
+          [filters]="[
+            { key: 'mine', label: 'Mis tickets' },
+            { key: 'unassigned', label: 'Sin asignar' },
+            { key: 'high', label: 'Prioridad alta' }
+          ]"
+          [active]="kanbanFilter()"
+          (change)="kanbanFilter.set($event)"></app-quick-filters>
+
+        <div class="board">
+          <div class="column" [attr.data-status]="col.value" *ngFor="let col of statuses" (dragover)="allowDrop($event)" (drop)="drop(col.value)">
+            <div class="column-header">
+              <span class="col-dot"></span>
+              <h3>{{ col.label }}</h3>
+              <span class="col-count">{{ grouped()[col.value]?.length || 0 }}</span>
+            </div>
+            <div class="cards">
+              <div
+                *ngFor="let t of grouped()[col.value]"
+                class="ticket-card"
+                [class.no-drag]="!canEditTicket(t)"
+                [attr.data-priority]="t.priority"
+                (click)="openDetail(t)"
+                [draggable]="canEditTicket(t)"
+                (dragstart)="dragStart(t)">
+                <div class="card-accent-bar"></div>
+                <div class="card-body">
+                  <div class="ticket-title">{{ t.title }}</div>
+                  <div class="meta">
+                    <span class="assignee"><i class="pi pi-user"></i> {{ t.assignedTo || 'Sin asignar' }}</span>
+                    <span class="priority-badge" [attr.data-prio]="t.priority">{{ t.priority }}</span>
+                  </div>
+                  <div class="dates">
+                    <small><i class="pi pi-calendar"></i> Creado: {{ t.createdAt | date: 'shortDate' }}</small>
+                    <small *ngIf="t.dueDate"><i class="pi pi-clock"></i> Límite: {{ t.dueDate | date: 'shortDate' }}</small>
+                  </div>
+                  <button *ngIf="canEditTicket(t)" pButton type="button" label="Mover" icon="pi pi-arrow-right" class="p-button-text p-button-sm move-btn" (click)="$event.stopPropagation(); moveNext(t)"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p-dialog [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '520px' }" [dismissableMask]="true">
+          <ng-container *ngIf="selectedTicket() as ticket">
+            <h3>{{ ticket.title }}</h3>
+            <p class="muted">Creado: {{ ticket.createdAt | date: 'short' }}</p>
+            <p>{{ ticket.description }}</p>
+            <div class="field-row">
+              <label>Estado</label>
+              <p-select
+                *ngIf="canEditTicket(ticket); else showStatus"
+                [options]="statuses"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="ticket.status"
+                (onChange)="changeStatus(ticket, $event.value)"></p-select>
+              <ng-template #showStatus><span>{{ ticket.status }}</span></ng-template>
+            </div>
+            <div class="field-row">
+              <label>Prioridad</label>
+              <p-select
+                *ngIf="canEditTicket(ticket); else showPriority"
+                [options]="priorities"
+                [ngModel]="ticket.priority"
+                (onChange)="updatePriority(ticket, $event.value)"></p-select>
+              <ng-template #showPriority><span>{{ ticket.priority }}</span></ng-template>
+            </div>
+            <div class="field-row">
+              <label>Asignado</label>
+              <span>{{ ticket.assignedTo || 'Sin asignar' }}</span>
+              <button *ngIf="isPrivileged" pButton type="button" label="Asignarme" class="p-button-text" (click)="assignMe(ticket)"></button>
+            </div>
+          </ng-container>
+        </p-dialog>
+
+      </ng-container><!-- /vista kanban -->
+
+    </ng-container>
+
+    <!-- ===== SIN GRUPO SELECCIONADO ===== -->
+    <ng-template #noGroupState>
+      <div class="no-group-card">
+        <div class="no-group-icon"><i class="pi pi-users"></i></div>
+        <h2>Selecciona un grupo de trabajo</h2>
+        <p>Elige un espacio para ver sus tickets, métricas y actividad en tiempo real.</p>
+        <p-button label="Elegir grupo" icon="pi pi-arrow-right" iconPos="right" (onClick)="goSelect()"></p-button>
       </div>
     </ng-template>
+
   </div>
 </app-main-layout>

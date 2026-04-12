@@ -7,7 +7,7 @@
     </div>
   </div>
 
-  <div class="filters">
+  <div class="filters" *ngIf="isPrivileged">
     <p-select
       [options]="statuses"
       optionLabel="label"
@@ -23,6 +23,7 @@
   </div>
 
   <app-quick-filters
+    *ngIf="isPrivileged"
     [filters]="[
       { key: 'mine', label: 'Mis tickets' },
       { key: 'unassigned', label: 'Sin asignar' },
@@ -31,22 +32,26 @@
     [active]="quickFilter()"
     (change)="quickFilter.set($event)"></app-quick-filters>
 
-  <p-table [value]="tickets()" responsiveLayout="scroll">
+  <p-table [value]="tickets()" responsiveLayout="scroll" sortMode="multiple">
     <ng-template pTemplate="header">
       <tr>
-        <th>Título</th>
-        <th>Estado</th>
-        <th>Asignado</th>
-        <th>Prioridad</th>
-        <th>F. creación</th>
+        <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+        <th pSortableColumn="title">Título <p-sortIcon field="title"></p-sortIcon></th>
+        <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
+        <th pSortableColumn="assignedTo">Asignado <p-sortIcon field="assignedTo"></p-sortIcon></th>
+        <th pSortableColumn="priority">Prioridad <p-sortIcon field="priority"></p-sortIcon></th>
+        <th pSortableColumn="dueDate">F. límite <p-sortIcon field="dueDate"></p-sortIcon></th>
+        <th pSortableColumn="createdAt">F. creación <p-sortIcon field="createdAt"></p-sortIcon></th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-row>
       <tr (click)="open(row)" class="clickable-row">
+        <td>{{ row.id }}</td>
         <td>{{ row.title }}</td>
         <td><p-tag [value]="row.status"></p-tag></td>
         <td>{{ row.assignedTo || 'Sin asignar' }}</td>
         <td>{{ row.priority }}</td>
+        <td>{{ row.dueDate ? (row.dueDate | date: 'shortDate') : '—' }}</td>
         <td>{{ row.createdAt | date: 'short' }}</td>
       </tr>
     </ng-template>

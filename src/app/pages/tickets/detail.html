@@ -4,12 +4,19 @@
     <div class="page-header">
       <div>
         <p class="eyebrow">Ticket</p>
-        <h1>{{ ticket.title }}</h1>
+        <h1>
+          <input
+            pInputText
+            [disabled]="!canEditAll"
+            [ngModel]="ticket.title"
+            (ngModelChange)="updateTitle($event)"
+          />
+        </h1>
         <p class="subtitle">Detalle y cambios.</p>
       </div>
       <div class="header-actions">
-        <button pButton type="button" label="Asignarme" class="p-button-text" (click)="assignMe()"></button>
-        <button pButton type="button" label="Eliminar" class="p-button-danger p-button-text" (click)="delete()"></button>
+        <button pButton type="button" label="Asignarme" class="p-button-text" [disabled]="!canEditAll" (click)="assignMe()"></button>
+        <button pButton type="button" label="Eliminar" class="p-button-danger p-button-text" [disabled]="!canEditAll" (click)="delete()"></button>
       </div>
     </div>
 
@@ -22,6 +29,7 @@
             optionLabel="label"
             optionValue="value"
             [ngModel]="ticket.status"
+            [disabled]="!canChangeStatus"
             (onChange)="updateStatus($event.value)"></p-select>
         </div>
         <div>
@@ -29,6 +37,7 @@
           <p-select
             [options]="priorities"
             [ngModel]="ticket.priority"
+            [disabled]="!canEditAll"
             (onChange)="updatePriority($event.value)"></p-select>
         </div>
         <div>
@@ -43,10 +52,50 @@
       </div>
 
       <h4>Descripción</h4>
-      <p class="description">{{ ticket.description }}</p>
+      <textarea
+        pTextarea
+        class="description"
+        [disabled]="!canEditAll"
+        [ngModel]="ticket.description"
+        (ngModelChange)="updateDescription($event)"
+        rows="4"></textarea>
 
-      <h4>Actividad</h4>
-      <p class="muted">Historial simplificado (mock): cambios quedan registrados en memoria.</p>
+      <div class="field-row">
+        <label>Fecha límite</label>
+        <p-datepicker
+          [disabled]="!canEditAll"
+          [ngModel]="dueDateValue"
+          (ngModelChange)="updateDueDate($event)"
+          dateFormat="dd/mm/yy"
+          showIcon="true"
+        ></p-datepicker>
+      </div>
+
+      <h4>Comentarios</h4>
+      <div *ngIf="ticket.comments?.length; else noComments">
+        <ul>
+          <li *ngFor="let c of ticket.comments">
+            <strong>{{ c.author }}</strong> — {{ c.message }}
+            <small class="muted">{{ c.at | date: 'short' }}</small>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noComments><p class="muted">Sin comentarios aún.</p></ng-template>
+      <div class="comment-box">
+        <textarea pInputTextarea rows="2" [(ngModel)]="comment" placeholder="Agrega un comentario" [disabled]="!canComment"></textarea>
+        <button pButton type="button" label="Comentar" icon="pi pi-send" [disabled]="!comment || !canComment" (click)="addComment()"></button>
+      </div>
+
+      <h4>Historial</h4>
+      <div *ngIf="ticket.history?.length; else noHistory">
+        <ul>
+          <li *ngFor="let h of ticket.history">
+            <strong>{{ h.field }}</strong>: {{ h.from || '—' }} → {{ h.to || '—' }}
+            <small class="muted">{{ h.at | date: 'short' }} {{ h.author ? '· ' + h.author : '' }}</small>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noHistory><p class="muted">Sin historial registrado.</p></ng-template>
     </p-card>
   </div>
 

@@ -3,14 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
-import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { PasswordModule } from 'primeng/password';
-import { Header } from '../../../components/header/header';
-import { Footer } from '../../../components/footer/footer';
 
 import { Auth } from '../../../components/services/auth';
 
@@ -21,13 +17,9 @@ import { Auth } from '../../../components/services/auth';
     CommonModule,            
     ReactiveFormsModule,
     RouterLink,
-    CardModule,
     InputTextModule,
     ButtonModule,
     ToastModule,
-    PasswordModule,
-    Header,
-    Footer
   ],
   providers: [],
   templateUrl: './login.html',

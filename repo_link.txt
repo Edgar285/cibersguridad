@@ -1,0 +1,8 @@
+Repositorio del proyecto ERP
+
+URL: https://github.com/Edgar285/cibersguridad
+Rama principal: master
+
+Acceso rápido:
+1) Abrir la URL en el navegador.
+2) Si quiere clonar: git clone https://github.com/Edgar285/cibersguridad.git

@@ -43,23 +43,21 @@ export class TicketCreate {
 
   statusOptions = this.tickets.statuses();
   private priorityLabels: Record<TicketPriority, string> = {
-    至尊: 'Supremo',
-    紧急: 'Crítico',
-    高: 'Alto',
-    中: 'Medio',
-    低: 'Bajo',
-    很低: 'Muy bajo',
-    观察: 'Observación'
+    supremo: 'Supremo',
+    critico: 'Crítico',
+    alto: 'Alto',
+    medio: 'Medio',
+    bajo: 'Bajo',
+    muy_bajo: 'Muy bajo',
+    observacion: 'Observación'
   };
-  priorityOptions = this.tickets
-    .priorities()
-    .map(p => ({ label: this.priorityLabels[p] ?? p, value: p }));
+  priorityOptions = this.tickets.priorities().map(p => ({ label: this.priorityLabels[p] ?? p, value: p }));
 
   form = this.fb.group({
     title: ['', Validators.required],
     description: ['', Validators.required],
     status: ['pending' as TicketStatus, Validators.required],
-    priority: ['中' as TicketPriority, Validators.required],
+    priority: ['medio' as TicketPriority, Validators.required],
     assignedTo: [''],
     dueDate: [null]
   });
@@ -69,7 +67,7 @@ export class TicketCreate {
   }
 
   cancel() {
-    this.router.navigate(['/tickets/kanban']);
+    this.router.navigate(['/dashboard']);
   }
 
   submit() {
@@ -97,6 +95,6 @@ export class TicketCreate {
     });
 
     this.msg.add({ severity: 'success', summary: 'Ticket', detail: 'Creado' });
-    setTimeout(() => this.router.navigate(['/tickets/kanban']), 400);
+    setTimeout(() => this.router.navigate(['/dashboard']), 400);
   }
 }

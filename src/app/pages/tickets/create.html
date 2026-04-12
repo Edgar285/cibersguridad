@@ -29,11 +29,12 @@
 
         <div class="form-item full" [class.invalid]="f.description.invalid && f.description.touched">
           <label>Descripción *</label>
-          <p-textarea
+          <textarea
+            pTextarea
             formControlName="description"
             rows="3"
             placeholder="Contexto, alcance y criterio de éxito"
-          ></p-textarea>
+          ></textarea>
           <div class="field-error" *ngIf="f.description.invalid && f.description.touched">
             Describe brevemente el ticket.
           </div>

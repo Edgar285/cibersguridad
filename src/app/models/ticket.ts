@@ -1,13 +1,29 @@
 export type TicketStatus = 'pending' | 'in_progress' | 'review' | 'done' | 'blocked';
 
 export type TicketPriority =
-  | '至尊'
-  | '紧急'
-  | '高'
-  | '中'
-  | '低'
-  | '很低'
-  | '观察';
+  | 'supremo'
+  | 'critico'
+  | 'alto'
+  | 'medio'
+  | 'bajo'
+  | 'muy_bajo'
+  | 'observacion';
+
+export interface TicketComment {
+  id: string;
+  author: string;
+  message: string;
+  at: string;
+}
+
+export interface TicketHistoryEntry {
+  id: string;
+  field: 'status' | 'priority' | 'assignedTo' | 'dueDate' | 'title' | 'description';
+  from?: string;
+  to?: string;
+  at: string;
+  author?: string;
+}
 
 export interface Ticket {
   id: string;
@@ -20,6 +36,8 @@ export interface Ticket {
   assignedTo?: string;
   groupId: string;
   author: string;
+  comments: TicketComment[];
+  history: TicketHistoryEntry[];
 }
 
 export interface TicketInput {

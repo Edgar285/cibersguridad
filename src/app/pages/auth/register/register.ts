@@ -3,15 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { DatePickerModule } from 'primeng/datepicker';
 import { KeyFilterModule } from 'primeng/keyfilter';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { Header } from '../../../components/header/header';
-import { Footer } from '../../../components/footer/footer';
 
 import { Auth } from '../../../components/services/auth';
 import {
@@ -26,14 +22,10 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    CardModule,
     InputTextModule,
     ButtonModule,
-    DatePickerModule,
     KeyFilterModule,
     ToastModule,
-    Header,
-    Footer
   ],
   templateUrl: './register.html',
   styleUrl: './register.css'

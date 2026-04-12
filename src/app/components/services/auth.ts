@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ADMIN_PERMISSIONS, DEFAULT_USER_PERMISSIONS, Permission } from '../../models/permissions';
+import { ADMIN_PERMISSIONS, DEFAULT_USER_PERMISSIONS, Permission, SUPERADMIN_PERMISSIONS } from '../../models/permissions';
 
 type User = {
   username: string;
@@ -29,7 +29,7 @@ export class Auth {
       username: 'superAdmin',
       email: 'super@erp.com',
       password: this.hashPassword('Super123!'),
-      permissions: ADMIN_PERMISSIONS
+      permissions: SUPERADMIN_PERMISSIONS
     }
   ];
   private users: User[] = [...this.hardcodedUsers];
@@ -40,15 +40,21 @@ export class Auth {
 
   private load() {
     const saved = localStorage.getItem(this.storeKey);
-    if (!saved) return;
-
-    const parsed = JSON.parse(saved) as User[];
     const map = new Map<string, User>();
 
-    // Primero los guardados, después los hardcodeados para que estos últimos prevalezcan.
-    for (const user of parsed) {
-      map.set(this.key(user), this.normalize(user));
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as User[];
+        for (const user of parsed) {
+          map.set(this.key(user), this.normalize(user));
+        }
+      } catch {
+        // Si el JSON está corrupto, lo ignoramos y reconstruimos.
+        localStorage.removeItem(this.storeKey);
+      }
     }
+
+    // Primero los guardados válidos, después los hardcodeados para que estos últimos prevalezcan.
     for (const seed of this.hardcodedUsers) {
       map.set(this.key(seed), this.normalize(seed));
     }
@@ -66,6 +72,12 @@ export class Auth {
   }
 
   private normalize(user: User): User {
+    // Permisos válidos = solo los que siguen existiendo en el enum Permission.
+    // Si el profe borra un permiso del enum, aquí se purga del localStorage
+    // automáticamente y la directiva *appHasPermission deja de mostrarlo.
+    const validPerms = new Set<string>(Object.values(Permission));
+    const pruned = (user.permissions ?? []).filter(p => validPerms.has(p as string)) as Permission[];
+
     return {
       ...user,
       username: user.username.trim(),
@@ -74,7 +86,7 @@ export class Auth {
       address: user.address?.trim(),
       phone: user.phone?.trim(),
       password: user.password,
-      permissions: user.permissions?.length ? [...user.permissions] : [...DEFAULT_USER_PERMISSIONS]
+      permissions: pruned.length ? pruned : [...DEFAULT_USER_PERMISSIONS]
     };
   }
 
@@ -158,6 +170,56 @@ export class Auth {
   getLastUser(): User | null {
     if (!this.users.length) return null;
     return this.users[this.users.length - 1];
+  }
+
+  listUsers(): User[] {
+    return [...this.users];
+  }
+
+  createUser(user: NewUser): { ok: boolean; error?: string } {
+    const normalized = this.normalize({ ...user, permissions: user.permissions ?? DEFAULT_USER_PERMISSIONS });
+    const duplicate = this.users.some(
+      x => x.username.toLowerCase() === normalized.username.toLowerCase() || x.email === normalized.email
+    );
+    if (duplicate) return { ok: false, error: 'Usuario o email ya registrado' };
+    this.users.push({ ...normalized, password: this.hashPassword(normalized.password) });
+    this.persist();
+    return { ok: true };
+  }
+
+  updateUser(email: string, payload: Partial<User>): { ok: boolean; error?: string } {
+    const idx = this.users.findIndex(u => u.email === email);
+    if (idx < 0) return { ok: false, error: 'Usuario no encontrado' };
+    const current = this.users[idx];
+    const updated = this.normalize({
+      ...current,
+      ...payload,
+      password: payload.password ? this.hashPassword(payload.password) : current.password,
+      permissions: payload.permissions ?? current.permissions
+    });
+    const collision = this.users.some(
+      (u, i) =>
+        i !== idx &&
+        (u.email.toLowerCase() === updated.email.toLowerCase() ||
+          u.username.toLowerCase() === updated.username.toLowerCase())
+    );
+    if (collision) return { ok: false, error: 'Email o usuario en uso' };
+    this.users[idx] = updated;
+    this.persist();
+    const token = localStorage.getItem(this.tokenKey);
+    if (token && token === email) localStorage.setItem(this.tokenKey, updated.email);
+    return { ok: true };
+  }
+
+  deleteUser(email: string): { ok: boolean; error?: string } {
+    const target = this.users.find(u => u.email === email);
+    if (!target) return { ok: false, error: 'Usuario no encontrado' };
+    if (target.username.toLowerCase() === 'superadmin') return { ok: false, error: 'No puedes eliminar al superAdmin' };
+    this.users = this.users.filter(u => u.email !== email);
+    this.persist();
+    const token = localStorage.getItem(this.tokenKey);
+    if (token === email) this.logout();
+    return { ok: true };
   }
 
   isLogged() {

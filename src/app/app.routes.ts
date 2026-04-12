@@ -3,13 +3,11 @@ import { Landing } from './pages/landing/landing';
 import { Login } from './pages/auth/login/login';
 import { Register } from './pages/auth/register/register';
 import { Dashboard } from './pages/dashboard/dashboard';
-import { Home } from './pages/home/home';
 import { Groups } from './pages/groups/groups';
-import { Users } from './pages/users/users';
 import { authGuard } from './components/guards/auth.guard';
 import { Permission } from './models/permissions';
 import { GroupSelect } from './pages/group-select/group-select';
-import { TicketKanban } from './pages/tickets/kanban';
+import { Users } from './pages/users/users';
 import { TicketList } from './pages/tickets/list';
 import { TicketDetail } from './pages/tickets/detail';
 import { TicketCreate } from './pages/tickets/create';
@@ -28,35 +26,41 @@ export const routes: Routes = [
 
   { path: 'group-select', component: GroupSelect, canActivate: [authGuard] },
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
-  { path: 'home', component: Home, canActivate: [authGuard] },
+  { path: 'home', redirectTo: 'dashboard', pathMatch: 'full' },
   {
     path: 'groups',
     component: Groups,
     canActivate: [authGuard],
-    data: { permissions: [Permission.GroupsView, Permission.GroupView], permissionLogic: 'any' }
+    data: {
+      // Admin o superior (usuarios normales no tienen GroupsView)
+      permissions: [Permission.GroupsView],
+      permissionLogic: 'any'
+    }
   },
   {
     path: 'users',
-    component: Users,
+    component: UserAdmin,
     canActivate: [authGuard],
-    data: { permissions: [Permission.UsersView, Permission.UserView], permissionLogic: 'any' }
+    data: {
+      // Admin o superior (usuarios normales no tienen GroupsView)
+      permissions: [Permission.GroupsView],
+      permissionLogic: 'any'
+    }
+  },
+  {
+    path: 'profile',
+    component: Users,
+    canActivate: [authGuard]
+    // Accesible por cualquier usuario logueado
   },
   {
     path: 'tickets',
     canActivate: [authGuard],
     children: [
-      { path: 'kanban', component: TicketKanban },
       { path: 'list', component: TicketList },
       { path: 'create', component: TicketCreate },
       { path: ':id', component: TicketDetail }
     ]
   },
-  {
-    path: 'user-admin',
-    component: UserAdmin,
-    canActivate: [authGuard],
-    data: { permissions: [Permission.UsersEdit, Permission.UserEdit, Permission.UserDelete], permissionLogic: 'any' }
-  },
-
   { path: '**', redirectTo: '' }
 ];

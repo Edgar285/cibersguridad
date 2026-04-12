@@ -2,21 +2,27 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+
+// PrimeNG Modules
 import { CardModule } from 'primeng/card';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { TableModule } from 'primeng/table';
+import { DividerModule } from 'primeng/divider';
+import { RippleModule } from 'primeng/ripple';
+
+// App imports
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { Auth } from '../../components/services/auth';
 import { TicketService } from '../../components/services/ticket.service';
 import { GroupContextService } from '../../components/services/group-context.service';
-import { Ticket } from '../../models/ticket';
 import { HasPermissionDirective } from '../../components/directives/has-permission.directive';
 import { Permission } from '../../models/permissions';
+import { Ticket } from '../../models/ticket';
 
 @Component({
   selector: 'app-users',
@@ -28,15 +34,17 @@ import { Permission } from '../../models/permissions';
     AvatarModule,
     ButtonModule,
     TagModule,
-    DividerModule,
     InputTextModule,
     ToastModule,
+    TableModule,
+    DividerModule,
+    RippleModule,
     MainLayout,
     HasPermissionDirective
   ],
   providers: [MessageService],
   templateUrl: './users.html',
-  styleUrl: './users.css'
+  styleUrls: ['./users.css']
 })
 export class Users implements OnInit {
   private auth = inject(Auth);
@@ -47,6 +55,7 @@ export class Users implements OnInit {
   private msg = inject(MessageService);
 
   protected permission = Permission;
+  saving = false;
 
   user = {
     name: '—',
@@ -58,25 +67,27 @@ export class Users implements OnInit {
   };
 
   form = this.fb.group({
-    fullName: ['', Validators.required],
+    fullName: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
-    username: ['', Validators.required],
-    phone: ['', [Validators.required, Validators.pattern(/^\+?\d[\d\s-]{7,}$/)]],
+    username: ['', [Validators.required, Validators.minLength(3)]],
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s-]{10,}$/)]],
     address: ['', Validators.required]
   });
 
   assigned: Ticket[] = [];
-
-  canEdit() {
-    return this.auth.hasAnyPermission([Permission.UsersEdit, Permission.UserEdit]);
-  }
-
-  canDelete() {
-    return this.auth.hasAnyPermission([Permission.UserDelete]);
-  }
+  summary = {
+    abiertos: 0,
+    enProgreso: 0,
+    hechos: 0
+  };
 
   ngOnInit() {
+    this.loadUserData();
+  }
+
+  private loadUserData() {
     const current = this.auth.getCurrentUser();
+    
     if (!current) {
       this.router.navigate(['/auth/login']);
       return;
@@ -93,10 +104,10 @@ export class Users implements OnInit {
 
     const groupId = this.ctx.get();
     if (groupId) {
-      this.assigned = this.tickets.listByGroup(groupId).filter(t => t.assignedTo === current.email);
+      this.loadTickets(groupId, current.email);
     }
 
-    this.form.setValue({
+    this.form.patchValue({
       fullName: current.fullName || '',
       email: current.email,
       username: current.username,
@@ -105,53 +116,142 @@ export class Users implements OnInit {
     });
   }
 
+  private loadTickets(groupId: string, userEmail: string) {
+    this.assigned = this.tickets
+      .listByGroup(groupId)
+      .filter(t => t.assignedTo === userEmail);
+
+    this.summary = {
+      abiertos: this.assigned.filter(t => 
+        ['pending', 'blocked'].includes(t.status)).length,
+      enProgreso: this.assigned.filter(t => 
+        ['in_progress', 'review'].includes(t.status)).length,
+      hechos: this.assigned.filter(t => t.status === 'done').length
+    };
+  }
+
   save() {
     if (!this.canEdit()) {
-      this.msg.add({ severity: 'warn', summary: 'Permisos', detail: 'No puedes editar usuarios.' });
+      this.showPermissionWarning();
       return;
     }
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.msg.add({ severity: 'warn', summary: 'Perfil', detail: 'Revisa los campos obligatorios' });
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Formulario inválido',
+        detail: 'Por favor, revisa los campos requeridos'
+      });
       return;
     }
 
-    const result = this.auth.updateCurrentUser({
-      fullName: this.form.value.fullName!,
-      email: this.form.value.email!,
-      username: this.form.value.username!,
-      phone: this.form.value.phone!,
-      address: this.form.value.address!
-    });
+    this.saving = true;
+    
+    setTimeout(() => {
+      const result = this.auth.updateCurrentUser({
+        fullName: this.form.value.fullName!,
+        email: this.form.value.email!,
+        username: this.form.value.username!,
+        phone: this.form.value.phone!,
+        address: this.form.value.address!
+      });
 
-    if (!result.ok) {
-      this.msg.add({ severity: 'error', summary: 'Perfil', detail: result.error ?? 'No se pudo guardar' });
-      return;
-    }
+      this.saving = false;
 
-    this.user = {
-      ...this.user,
-      name: this.form.value.fullName!,
-      email: this.form.value.email!,
-      location: this.form.value.address!,
-      phone: this.form.value.phone!
-    };
+      if (!result.ok) {
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: result.error ?? 'No se pudo guardar'
+        });
+        return;
+      }
 
-    this.msg.add({ severity: 'success', summary: 'Perfil', detail: 'Datos actualizados' });
+      this.user = {
+        ...this.user,
+        name: this.form.value.fullName!,
+        email: this.form.value.email!,
+        location: this.form.value.address!,
+        phone: this.form.value.phone!
+      };
+
+      this.msg.add({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Datos actualizados correctamente'
+      });
+    }, 1000);
   }
 
   deactivate() {
     if (!this.canDelete()) {
-      this.msg.add({ severity: 'warn', summary: 'Permisos', detail: 'No puedes eliminar usuarios.' });
+      this.showPermissionWarning();
       return;
     }
-    const res = this.auth.deleteCurrentUser();
-    if (res.ok) {
-      this.msg.add({ severity: 'success', summary: 'Cuenta', detail: 'Cuenta eliminada' });
-      setTimeout(() => this.router.navigate(['/auth/login']), 500);
+
+    const result = this.auth.deleteCurrentUser();
+    
+    if (result.ok) {
+      this.msg.add({
+        severity: 'success',
+        summary: 'Cuenta desactivada',
+        detail: 'Tu cuenta ha sido desactivada exitosamente'
+      });
+      setTimeout(() => this.router.navigate(['/auth/login']), 2000);
     } else {
-      this.msg.add({ severity: 'error', summary: 'Cuenta', detail: res.error ?? 'No se pudo eliminar' });
+      this.msg.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: result.error ?? 'No se pudo desactivar'
+      });
     }
+  }
+
+  resetForm() {
+    this.form.reset(this.form.value);
+  }
+
+  viewTicket(ticket: Ticket) {
+    this.router.navigate(['/tickets', ticket.id]);
+  }
+
+  // Helper methods for ticket status
+  getTicketSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    const severities: Record<string, any> = {
+      'pending': 'warn',
+      'in_progress': 'info',
+      'review': 'info',
+      'done': 'success',
+      'blocked': 'danger'
+    };
+    return severities[status] || 'secondary';
+  }
+
+  getPrioritySeverity(priority: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    const severities: Record<string, any> = {
+      'low': 'success',
+      'medium': 'info',
+      'high': 'warn',
+      'critical': 'danger'
+    };
+    return severities[priority] || 'secondary';
+  }
+
+  // Permission checks
+  canEdit(): boolean {
+    return this.auth.hasAnyPermission([Permission.UsersEdit, Permission.UserEdit]);
+  }
+
+  canDelete(): boolean {
+    return this.auth.hasAnyPermission([Permission.UserDelete]);
+  }
+
+  private showPermissionWarning() {
+    this.msg.add({
+      severity: 'warn',
+      summary: 'Permisos insuficientes',
+      detail: 'No tienes permisos para realizar esta acción'
+    });
   }
 }

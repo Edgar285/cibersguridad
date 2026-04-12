@@ -3,83 +3,124 @@
 
   <div class="page-header">
     <div>
-      <p class="eyebrow">Usuario</p>
+      <p class="eyebrow">Mi cuenta</p>
       <h1>Perfil y datos</h1>
-      <p class="subtitle">Mostramos y editamos la información del registro actual.</p>
+      <p class="subtitle">Actualiza tu información personal desde aquí.</p>
     </div>
-    <div class="header-actions">
-      <button
-        *appHasPermission="permission.UserDelete"
-        pButton
-        type="button"
-        label="Desactivar"
-        icon="pi pi-ban"
-        class="p-button-danger p-button-outlined"
-        (click)="deactivate()"></button>
-    </div>
+    <button
+      *appHasPermission="permission.UserDelete"
+      pButton
+      type="button"
+      label="Desactivar cuenta"
+      icon="pi pi-ban"
+      class="p-button-danger p-button-outlined"
+      (click)="deactivate()"></button>
   </div>
 
-  <div class="profile">
-    <p-card class="profile-card" header="Perfil">
-      <div class="profile-main">
-        <p-avatar icon="pi pi-user" size="xlarge" shape="circle"></p-avatar>
-        <div>
-          <h2>{{ user.name }}</h2>
-          <p class="muted">{{ user.email }}</p>
-          <div class="badges">
-            <p-tag [value]="user.role" severity="info"></p-tag>
-            <p-tag [value]="user.status" severity="success"></p-tag>
+  <div class="profile-layout">
+
+    <!-- Columna izquierda: tarjeta de identidad + stats -->
+    <div class="left-col">
+      <div class="identity-card">
+        <div class="avatar-wrap">
+          <p-avatar icon="pi pi-user" size="xlarge" shape="circle" styleClass="big-avatar"></p-avatar>
+          <span class="status-dot"></span>
+        </div>
+        <h2 class="identity-name">{{ user.name }}</h2>
+        <p class="identity-email">{{ user.email }}</p>
+        <div class="identity-badges">
+          <p-tag [value]="user.role" severity="info"></p-tag>
+          <p-tag [value]="user.status" severity="success"></p-tag>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-num">{{ summary.abiertos }}</span>
+          <span class="stat-lbl">Abiertos</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">{{ summary.enProgreso }}</span>
+          <span class="stat-lbl">En progreso</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">{{ summary.hechos }}</span>
+          <span class="stat-lbl">Completados</span>
+        </div>
+      </div>
+
+      <p-card class="tickets-card" header="Tickets asignados">
+        <div *ngIf="assigned.length; else noTickets" class="ticket-list">
+          <div *ngFor="let t of assigned" class="ticket-row">
+            <i class="pi pi-ticket ticket-icon"></i>
+            <div>
+              <p class="ticket-title">{{ t.title }}</p>
+              <p-tag [value]="t.status" severity="info" styleClass="ticket-tag"></p-tag>
+            </div>
           </div>
-          <div class="muted">Asignados en este grupo: {{ assigned.length }}</div>
         </div>
-      </div>
-    </p-card>
+        <ng-template #noTickets>
+          <div class="empty-state">
+            <i class="pi pi-inbox empty-icon"></i>
+            <p>Sin tickets asignados en este grupo.</p>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
 
-    <p-card class="form-card" header="Actualizar datos">
-      <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
-        <div class="form-item">
-          <label for="fullName">Nombre completo</label>
-          <input pInputText id="fullName" formControlName="fullName" />
-        </div>
-        <div class="form-item">
-          <label for="email">Correo</label>
-          <input pInputText id="email" formControlName="email" />
-        </div>
-        <div class="form-item">
-          <label for="username">Usuario</label>
-          <input pInputText id="username" formControlName="username" />
-        </div>
-        <div class="form-item">
-          <label for="phone">Teléfono</label>
-          <input pInputText id="phone" formControlName="phone" />
-        </div>
-        <div class="form-item">
-          <label for="address">Dirección</label>
-          <input pInputText id="address" formControlName="address" />
-        </div>
+    <!-- Columna derecha: formulario -->
+    <div class="right-col">
+      <p-card header="Actualizar datos">
+        <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
 
-        <div class="form-actions">
-          <button pButton type="button" label="Cancelar" class="p-button-text" (click)="form.reset(form.value)"></button>
-          <button
-            *appHasPermission="[permission.UsersEdit, permission.UserEdit]; appHasPermissionMode: 'any'"
-            pButton
-            type="submit"
-            label="Guardar"
-            icon="pi pi-save"
-            class="p-button-success"></button>
-        </div>
-      </form>
-    </p-card>
+          <div class="form-section-title">Información personal</div>
 
-    <p-card class="tickets-card" header="Tickets asignados">
-      <div *ngIf="assigned.length; else noTickets">
-        <ul>
-          <li *ngFor="let t of assigned">{{ t.title }} — {{ t.status }}</li>
-        </ul>
-      </div>
-      <ng-template #noTickets>
-        <p class="muted">Sin tickets asignados en este grupo.</p>
-      </ng-template>
-    </p-card>
+          <div class="form-row">
+            <div class="form-item">
+              <label for="fullName">Nombre completo</label>
+              <input pInputText id="fullName" formControlName="fullName" placeholder="Ej. Juan Pérez" />
+              <small class="form-error" *ngIf="form.get('fullName')?.touched && form.get('fullName')?.invalid">Campo requerido</small>
+            </div>
+            <div class="form-item">
+              <label for="username">Usuario</label>
+              <input pInputText id="username" formControlName="username" placeholder="Ej. jperez" />
+              <small class="form-error" *ngIf="form.get('username')?.touched && form.get('username')?.invalid">Campo requerido</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-item">
+              <label for="email">Correo electrónico</label>
+              <input pInputText id="email" formControlName="email" placeholder="Ej. juan@empresa.com" />
+              <small class="form-error" *ngIf="form.get('email')?.touched && form.get('email')?.invalid">Email inválido</small>
+            </div>
+            <div class="form-item">
+              <label for="phone">Teléfono</label>
+              <input pInputText id="phone" formControlName="phone" placeholder="Ej. +52 55 1234 5678" />
+              <small class="form-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.invalid">Formato inválido</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-item full">
+              <label for="address">Dirección</label>
+              <input pInputText id="address" formControlName="address" placeholder="Ej. Calle 123, Col. Centro" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button pButton type="button" label="Cancelar" class="p-button-text" (click)="form.reset(form.value)"></button>
+            <button
+              *appHasPermission="[permission.UsersEdit, permission.UserEdit]; appHasPermissionMode: 'any'"
+              pButton
+              type="submit"
+              label="Guardar cambios"
+              icon="pi pi-check"
+              class="p-button-success"></button>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
   </div>
 </app-main-layout>

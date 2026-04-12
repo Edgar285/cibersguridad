@@ -1,45 +1,93 @@
-<div class="auth-shell">
-  <app-header></app-header>
+<div class="auth-page">
+  <p-toast></p-toast>
 
-  <main class="auth-main">
-    <p-toast></p-toast>
-    <p-card class="auth-card" header="Bienvenido" subheader="Inicia sesión en tu cuenta">
+  <!-- Panel izquierdo: branding -->
+  <div class="auth-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <i class="pi pi-sitemap"></i>
+      </div>
+      <h1 class="brand-title">ERP System</h1>
+      <p class="brand-sub">Gestión empresarial eficiente y profesional. Controla tickets, grupos y usuarios desde un solo lugar.</p>
+
+      <ul class="brand-features">
+        <li><i class="pi pi-check-circle"></i><span>Gestión de tickets en tiempo real</span></li>
+        <li><i class="pi pi-check-circle"></i><span>Control de grupos y permisos</span></li>
+        <li><i class="pi pi-check-circle"></i><span>Dashboard con métricas clave</span></li>
+      </ul>
+
+      <div class="brand-badge">v0.0.0 &nbsp;·&nbsp; © 2026 Edgar Tinajero</div>
+    </div>
+  </div>
+
+  <!-- Panel derecho: formulario -->
+  <div class="auth-form-panel">
+    <div class="auth-form-wrap">
+
+      <div class="form-heading">
+        <div class="form-logo-sm"><i class="pi pi-sitemap"></i></div>
+        <h2>Bienvenido de nuevo</h2>
+        <p>Inicia sesión en tu cuenta para continuar</p>
+      </div>
+
       <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+
         <div class="form-group">
-          <label class="form-label" for="userOrEmail">Usuario o Email</label>
-          <input 
+          <label class="form-label" for="userOrEmail">
+            <i class="pi pi-user"></i> Usuario o Email
+          </label>
+          <input
             id="userOrEmail"
             type="text"
-            formControlName="userOrEmail" 
+            formControlName="userOrEmail"
             pInputText
-            placeholder="Ingresa tu usuario o email"
+            class="auth-input"
+            placeholder="tu@email.com o nombre de usuario"
           />
-          <small class="p-error" *ngIf="c('userOrEmail').touched && c('userOrEmail').invalid">
-            Campo requerido
+          <small class="form-error" *ngIf="c('userOrEmail').touched && c('userOrEmail').invalid">
+            <i class="pi pi-exclamation-circle"></i> Campo requerido
           </small>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="password">Contraseña</label>
+          <label class="form-label" for="password">
+            <i class="pi pi-lock"></i> Contraseña
+          </label>
           <input
             id="password"
             type="password"
             formControlName="password"
             pInputText
-            placeholder="Ingresa tu contraseña"
+            class="auth-input"
+            placeholder="••••••••••"
           />
-          <small class="p-error" *ngIf="c('password').touched && c('password').invalid">
-            Campo requerido
+          <small class="form-error" *ngIf="c('password').touched && c('password').invalid">
+            <i class="pi pi-exclamation-circle"></i> Campo requerido
           </small>
         </div>
 
-        <div class="form-actions">
-          <p-button type="submit" label="Entrar" [disabled]="form.invalid" styleClass="p-button-success p-button-lg w-full"></p-button>
-          <p-button type="button" label="Crear cuenta" severity="secondary" styleClass="p-button-outlined p-button-lg w-full" routerLink="/auth/register"></p-button>
-        </div>
-      </form>
-    </p-card>
-  </main>
+        <p-button
+          type="submit"
+          label="Iniciar sesión"
+          icon="pi pi-sign-in"
+          iconPos="right"
+          [disabled]="form.invalid"
+          styleClass="btn-primary-full"
+        ></p-button>
 
-  <app-footer></app-footer>
+        <div class="form-divider"><span>¿No tienes cuenta?</span></div>
+
+        <p-button
+          type="button"
+          label="Crear cuenta nueva"
+          icon="pi pi-user-plus"
+          iconPos="right"
+          severity="secondary"
+          styleClass="btn-secondary-full"
+          routerLink="/auth/register"
+        ></p-button>
+
+      </form>
+    </div>
+  </div>
 </div>

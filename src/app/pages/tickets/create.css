@@ -74,7 +74,7 @@
   color: #c0392b;
 }
 
-.form-item.invalid :is(input[pInputText], p-textarea, p-select, p-datepicker) {
+.form-item.invalid :is(input[pInputText], textarea[pTextarea], p-select, p-datepicker) {
   border-color: #e67e22;
   box-shadow: 0 0 0 1px #f1c40f33;
 }
@@ -85,7 +85,7 @@ label {
 }
 
 input[pInputText],
-p-textarea,
+textarea[pTextarea],
 p-select,
 p-datepicker {
   width: 100%;
