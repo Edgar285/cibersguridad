@@ -1,230 +1,254 @@
 import { Injectable } from '@angular/core';
-import { ADMIN_PERMISSIONS, DEFAULT_USER_PERMISSIONS, Permission, SUPERADMIN_PERMISSIONS } from '../../models/permissions';
+import { Permission } from '../../models/permissions';
 
-type User = {
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+  permissions: Permission[];
+  fullName?: string | null;
+  address?: string;
+  phone?: string;
+  birthdate?: string;
+  isActive?: boolean;
+};
+
+type NewUser = {
   username: string;
   email: string;
   password: string;
-  permissions: Permission[];
+  permissions?: Permission[];
   fullName?: string;
   address?: string;
   phone?: string;
   birthdate?: string;
 };
 
-type NewUser = Omit<User, 'permissions'> & { permissions?: Permission[] };
+type ApiEnvelope<T> = {
+  statusCode: number;
+  intOpCode: number;
+  data: T & { message?: string };
+};
 
 @Injectable({ providedIn: 'root' })
 export class Auth {
-  private readonly storeKey = 'users';
-  private readonly tokenKey = 'token';
-  private readonly hardcodedUsers: User[] = [
-    {
-      username: 'Edgy',
-      email: 'edu@mail.com',
-      password: this.hashPassword('1234567E@'),
-      permissions: ADMIN_PERMISSIONS
-    },
-    {
-      username: 'superAdmin',
-      email: 'super@erp.com',
-      password: this.hashPassword('Super123!'),
-      permissions: SUPERADMIN_PERMISSIONS
+  private readonly apiBase = 'http://localhost:3001/api/v1/users';
+  private readonly tokenKey = 'user-service-token';
+  private readonly currentUserKey = 'user-service-current-user';
+  private currentUser: User | null = this.loadCurrentUser();
+
+  private loadCurrentUser(): User | null {
+    const raw = localStorage.getItem(this.currentUserKey);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as User;
+    } catch {
+      localStorage.removeItem(this.currentUserKey);
+      return null;
     }
-  ];
-  private users: User[] = [...this.hardcodedUsers];
-
-  constructor() {
-    this.load();
   }
 
-  private load() {
-    const saved = localStorage.getItem(this.storeKey);
-    const map = new Map<string, User>();
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as User[];
-        for (const user of parsed) {
-          map.set(this.key(user), this.normalize(user));
-        }
-      } catch {
-        // Si el JSON está corrupto, lo ignoramos y reconstruimos.
-        localStorage.removeItem(this.storeKey);
-      }
-    }
-
-    // Primero los guardados válidos, después los hardcodeados para que estos últimos prevalezcan.
-    for (const seed of this.hardcodedUsers) {
-      map.set(this.key(seed), this.normalize(seed));
-    }
-
-    this.users = Array.from(map.values());
-    this.persist();
+  private setSession(token: string, user: User) {
+    localStorage.setItem(this.tokenKey, token);
+    localStorage.setItem(this.currentUserKey, JSON.stringify(user));
+    this.currentUser = user;
   }
 
-  private persist() {
-    localStorage.setItem(this.storeKey, JSON.stringify(this.users));
+  private updateCachedUser(user: User) {
+    localStorage.setItem(this.currentUserKey, JSON.stringify(user));
+    this.currentUser = user;
   }
 
-  private key(user: Pick<User, 'username' | 'email'>) {
-    return `${user.username.toLowerCase()}|${user.email.toLowerCase()}`;
+  private clearSession() {
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.currentUserKey);
+    this.currentUser = null;
   }
 
-  private normalize(user: User): User {
-    // Permisos válidos = solo los que siguen existiendo en el enum Permission.
-    // Si el profe borra un permiso del enum, aquí se purga del localStorage
-    // automáticamente y la directiva *appHasPermission deja de mostrarlo.
-    const validPerms = new Set<string>(Object.values(Permission));
-    const pruned = (user.permissions ?? []).filter(p => validPerms.has(p as string)) as Permission[];
-
+  private mapUser(user: Partial<User>): User {
     return {
-      ...user,
-      username: user.username.trim(),
-      email: user.email.trim().toLowerCase(),
-      fullName: user.fullName?.trim(),
-      address: user.address?.trim(),
-      phone: user.phone?.trim(),
-      password: user.password,
-      permissions: pruned.length ? pruned : [...DEFAULT_USER_PERMISSIONS]
+      id: user.id ?? '',
+      username: user.username?.trim() ?? '',
+      email: user.email?.trim().toLowerCase() ?? '',
+      permissions: (user.permissions ?? []) as Permission[],
+      fullName: user.fullName ?? null,
+      address: user.address,
+      phone: user.phone,
+      birthdate: user.birthdate,
+      isActive: user.isActive
     };
   }
 
-  private hashPassword(value: string) {
-    // No es seguro para producción; evita guardar en claro mientras no hay backend.
-    return btoa(`erp-${value}-salt`);
-  }
+  private async request<T>(path: string, init?: RequestInit, auth = false): Promise<ApiEnvelope<T>> {
+    const headers = new Headers(init?.headers ?? {});
+    headers.set('Content-Type', 'application/json');
 
-  login(userOrEmail: string, password: string): { ok: boolean; error?: string } {
-    const u = userOrEmail.toLowerCase().trim();
-    const hashed = this.hashPassword(password);
+    if (auth) {
+      const token = localStorage.getItem(this.tokenKey);
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+    }
 
-    const found = this.users.find(
-      x => (x.username.toLowerCase() === u || x.email.toLowerCase() === u) && x.password === hashed
-    );
-
-    if (!found) return { ok: false, error: 'Credenciales incorrectas' };
-
-    localStorage.setItem(this.tokenKey, found.email);
-    return { ok: true };
-  }
-
-  register(user: NewUser): { ok: boolean; error?: string } {
-    const normalized = this.normalize({ ...user, permissions: user.permissions ?? DEFAULT_USER_PERMISSIONS });
-    const duplicate = this.users.some(
-      x => x.username.toLowerCase() === normalized.username.toLowerCase() || x.email === normalized.email
-    );
-
-    if (duplicate) return { ok: false, error: 'Usuario o email ya registrado' };
-
-    this.users.push({ ...normalized, password: this.hashPassword(normalized.password) });
-    this.persist();
-    return { ok: true };
-  }
-
-  updateCurrentUser(payload: Partial<User>): { ok: boolean; error?: string } {
-    const current = this.getCurrentUser();
-    if (!current) return { ok: false, error: 'Sesión no válida' };
-
-    const idx = this.users.findIndex(u => u.email === current.email);
-    if (idx < 0) return { ok: false, error: 'Usuario no encontrado' };
-
-    const updated = this.normalize({
-      ...current,
-      ...payload,
-      password: current.password,
-      permissions: payload.permissions ?? current.permissions
+    const response = await fetch(`${this.apiBase}${path}`, {
+      ...init,
+      headers
     });
 
-    // Verificar colisiones de email/username si cambian
-    const collision = this.users.some(
-      (u, i) =>
-        i !== idx &&
-        (u.email.toLowerCase() === updated.email.toLowerCase() ||
-          u.username.toLowerCase() === updated.username.toLowerCase())
-    );
-    if (collision) return { ok: false, error: 'Email o usuario en uso' };
+    const payload = (await response.json()) as ApiEnvelope<T>;
+    if (!response.ok) {
+      throw new Error(payload.data?.message ?? 'Error de comunicación con la API');
+    }
 
-    this.users[idx] = updated;
-    this.persist();
-    localStorage.setItem(this.tokenKey, updated.email);
-    return { ok: true };
+    return payload;
   }
 
-  deleteCurrentUser(): { ok: boolean; error?: string } {
-    const current = this.getCurrentUser();
-    if (!current) return { ok: false, error: 'Sesión no válida' };
+  async login(userOrEmail: string, password: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const payload = await this.request<{ token: string; user: User }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ userOrEmail, password })
+      });
 
-    this.users = this.users.filter(u => u.email !== current.email);
-    this.persist();
-    this.logout();
-    return { ok: true };
+      this.setSession(payload.data.token, this.mapUser(payload.data.user));
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Credenciales incorrectas' };
+    }
+  }
+
+  async register(user: NewUser): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.request<{ token: string; user: User }>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: user.username,
+          email: user.email,
+          password: user.password,
+          fullName: user.fullName
+        })
+      });
+
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo registrar' };
+    }
+  }
+
+  async updateCurrentUser(payload: Partial<User>): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const result = await this.request<{ user: User }>(
+        '/profile',
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            username: payload.username,
+            email: payload.email,
+            fullName: payload.fullName
+          })
+        },
+        true
+      );
+
+      this.updateCachedUser({
+        ...this.currentUser,
+        ...this.mapUser(result.data.user),
+        address: payload.address ?? this.currentUser?.address,
+        phone: payload.phone ?? this.currentUser?.phone,
+        birthdate: payload.birthdate ?? this.currentUser?.birthdate
+      } as User);
+
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo actualizar el perfil' };
+    }
+  }
+
+  async deleteCurrentUser(): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.request<{ message: string }>('/profile', { method: 'DELETE' }, true);
+      this.clearSession();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo eliminar la cuenta' };
+    }
   }
 
   getCurrentUser(): User | null {
-    const token = localStorage.getItem(this.tokenKey);
-    if (!token) return null;
-    return this.users.find(u => u.email === token) ?? null;
+    return this.currentUser;
   }
 
   getLastUser(): User | null {
-    if (!this.users.length) return null;
-    return this.users[this.users.length - 1];
+    return this.currentUser;
   }
 
-  listUsers(): User[] {
-    return [...this.users];
+  async listUsers(): Promise<User[]> {
+    try {
+      const result = await this.request<{ users: User[] }>('/admin/users', { method: 'GET' }, true);
+      return result.data.users.map(user => this.mapUser(user));
+    } catch {
+      return [];
+    }
   }
 
-  createUser(user: NewUser): { ok: boolean; error?: string } {
-    const normalized = this.normalize({ ...user, permissions: user.permissions ?? DEFAULT_USER_PERMISSIONS });
-    const duplicate = this.users.some(
-      x => x.username.toLowerCase() === normalized.username.toLowerCase() || x.email === normalized.email
-    );
-    if (duplicate) return { ok: false, error: 'Usuario o email ya registrado' };
-    this.users.push({ ...normalized, password: this.hashPassword(normalized.password) });
-    this.persist();
-    return { ok: true };
+  async createUser(user: NewUser): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.request<{ user: User }>(
+        '/admin/users',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            fullName: user.fullName,
+            permissions: user.permissions ?? []
+          })
+        },
+        true
+      );
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo crear el usuario' };
+    }
   }
 
-  updateUser(email: string, payload: Partial<User>): { ok: boolean; error?: string } {
-    const idx = this.users.findIndex(u => u.email === email);
-    if (idx < 0) return { ok: false, error: 'Usuario no encontrado' };
-    const current = this.users[idx];
-    const updated = this.normalize({
-      ...current,
-      ...payload,
-      password: payload.password ? this.hashPassword(payload.password) : current.password,
-      permissions: payload.permissions ?? current.permissions
-    });
-    const collision = this.users.some(
-      (u, i) =>
-        i !== idx &&
-        (u.email.toLowerCase() === updated.email.toLowerCase() ||
-          u.username.toLowerCase() === updated.username.toLowerCase())
-    );
-    if (collision) return { ok: false, error: 'Email o usuario en uso' };
-    this.users[idx] = updated;
-    this.persist();
-    const token = localStorage.getItem(this.tokenKey);
-    if (token && token === email) localStorage.setItem(this.tokenKey, updated.email);
-    return { ok: true };
+  async updateUser(
+    userId: string,
+    payload: Partial<User> & { password?: string }
+  ): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.request<{ user: User }>(
+        `/admin/users/${userId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            username: payload.username,
+            email: payload.email,
+            fullName: payload.fullName,
+            password: payload.password,
+            permissions: payload.permissions ?? []
+          })
+        },
+        true
+      );
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo actualizar el usuario' };
+    }
   }
 
-  deleteUser(email: string): { ok: boolean; error?: string } {
-    const target = this.users.find(u => u.email === email);
-    if (!target) return { ok: false, error: 'Usuario no encontrado' };
-    if (target.username.toLowerCase() === 'superadmin') return { ok: false, error: 'No puedes eliminar al superAdmin' };
-    this.users = this.users.filter(u => u.email !== email);
-    this.persist();
-    const token = localStorage.getItem(this.tokenKey);
-    if (token === email) this.logout();
-    return { ok: true };
+  async deleteUser(userId: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.request<{ message: string }>(`/admin/users/${userId}`, { method: 'DELETE' }, true);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'No se pudo eliminar el usuario' };
+    }
   }
 
   isLogged() {
-    const token = localStorage.getItem(this.tokenKey);
-    return !!token && !!this.users.find(u => u.email === token);
+    return !!localStorage.getItem(this.tokenKey) && !!this.currentUser;
   }
 
   hasPermissions(required: Permission[]) {
@@ -244,11 +268,10 @@ export class Auth {
   }
 
   getPermissions(): Permission[] {
-    const current = this.getCurrentUser();
-    return current?.permissions ?? [];
+    return this.getCurrentUser()?.permissions ?? [];
   }
 
   logout() {
-    localStorage.removeItem(this.tokenKey);
+    this.clearSession();
   }
 }

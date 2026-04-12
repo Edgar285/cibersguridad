@@ -78,7 +78,7 @@ export class Register {
     return this.form.get(name)!;
   }
 
-  submit() {
+  async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.msg.add({
@@ -89,7 +89,7 @@ export class Register {
       return;
     }
 
-    const result = this.auth.register({
+    const result = await this.auth.register({
       username: this.form.value.username!,
       email: this.form.value.email!,
       password: this.form.value.password!,

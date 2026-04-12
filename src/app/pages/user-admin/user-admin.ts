@@ -91,11 +91,11 @@ export class UserAdmin implements OnInit {
   }
 
   ngOnInit() {
-    this.refresh();
+    void this.refresh();
   }
 
-  refresh() {
-    this.users = this.auth.listUsers();
+  async refresh() {
+    this.users = await this.auth.listUsers();
   }
 
   select(user: any) {
@@ -113,7 +113,7 @@ export class UserAdmin implements OnInit {
     this.dialogVisible = true;
   }
 
-  save() {
+  async save() {
     if (!this.canSave()) {
       this.msg.add({ severity: 'warn', summary: 'Permisos', detail: 'No tienes permisos para guardar usuarios' });
       return;
@@ -132,8 +132,8 @@ export class UserAdmin implements OnInit {
     };
 
     const result = this.selectedUser
-      ? this.auth.updateUser(this.selectedUser.email, payload)
-      : this.auth.createUser(payload);
+      ? await this.auth.updateUser(this.selectedUser.id, payload)
+      : await this.auth.createUser(payload);
 
     if (!result.ok) {
       this.msg.add({ severity: 'error', summary: 'Usuarios', detail: result.error ?? 'Error al guardar' });
@@ -141,24 +141,24 @@ export class UserAdmin implements OnInit {
     }
 
     this.msg.add({ severity: 'success', summary: 'Usuarios', detail: 'Guardado correctamente' });
-    this.refresh();
+    await this.refresh();
     this.selectedUser = null;
     this.dialogVisible = false;
     this.form = { username: '', email: '', password: '' };
   }
 
-  delete(user: any) {
+  async delete(user: any) {
     if (!this.canDelete()) {
       this.msg.add({ severity: 'warn', summary: 'Permisos', detail: 'No tienes permisos para eliminar usuarios' });
       return;
     }
-    const res = this.auth.deleteUser(user.email);
+    const res = await this.auth.deleteUser(user.id);
     if (!res.ok) {
       this.msg.add({ severity: 'error', summary: 'Usuarios', detail: res.error ?? 'No se pudo eliminar' });
       return;
     }
     this.msg.add({ severity: 'success', summary: 'Usuarios', detail: 'Eliminado' });
-    this.refresh();
+    await this.refresh();
     if (this.selectedUser?.email === user.email) { this.selectedUser = null; this.dialogVisible = false; }
   }
 

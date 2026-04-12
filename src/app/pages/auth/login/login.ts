@@ -43,14 +43,14 @@ export class Login {
     return this.form.get(name)!;
   }
 
-  submit() {
+  async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.msg.add({ severity: 'warn', summary: 'Validación', detail: 'Completa usuario y contraseña' });
       return;
     }
 
-    const { ok, error } = this.auth.login(this.form.value.userOrEmail!, this.form.value.password!);
+    const { ok, error } = await this.auth.login(this.form.value.userOrEmail!, this.form.value.password!);
 
     if (!ok) {
       this.msg.add({ severity: 'error', summary: 'Login', detail: error ?? 'Credenciales incorrectas' });

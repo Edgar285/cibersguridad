@@ -8,7 +8,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:ERP": "node dist/ERP/server/server.mjs"
+    "serve:ssr:ERP": "node dist/ERP/server/server.mjs",
+    "start:user-service": "node microservices/user-service/server.js"
   },
   "prettier": {
     "printWidth": 100,

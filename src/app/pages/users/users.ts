@@ -130,7 +130,7 @@ export class Users implements OnInit {
     };
   }
 
-  save() {
+  async save() {
     if (!this.canEdit()) {
       this.showPermissionWarning();
       return;
@@ -147,50 +147,48 @@ export class Users implements OnInit {
     }
 
     this.saving = true;
-    
-    setTimeout(() => {
-      const result = this.auth.updateCurrentUser({
-        fullName: this.form.value.fullName!,
-        email: this.form.value.email!,
-        username: this.form.value.username!,
-        phone: this.form.value.phone!,
-        address: this.form.value.address!
-      });
 
-      this.saving = false;
+    const result = await this.auth.updateCurrentUser({
+      fullName: this.form.value.fullName!,
+      email: this.form.value.email!,
+      username: this.form.value.username!,
+      phone: this.form.value.phone!,
+      address: this.form.value.address!
+    });
 
-      if (!result.ok) {
-        this.msg.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: result.error ?? 'No se pudo guardar'
-        });
-        return;
-      }
+    this.saving = false;
 
-      this.user = {
-        ...this.user,
-        name: this.form.value.fullName!,
-        email: this.form.value.email!,
-        location: this.form.value.address!,
-        phone: this.form.value.phone!
-      };
-
+    if (!result.ok) {
       this.msg.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Datos actualizados correctamente'
+        severity: 'error',
+        summary: 'Error',
+        detail: result.error ?? 'No se pudo guardar'
       });
-    }, 1000);
+      return;
+    }
+
+    this.user = {
+      ...this.user,
+      name: this.form.value.fullName!,
+      email: this.form.value.email!,
+      location: this.form.value.address!,
+      phone: this.form.value.phone!
+    };
+
+    this.msg.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Datos actualizados correctamente'
+    });
   }
 
-  deactivate() {
+  async deactivate() {
     if (!this.canDelete()) {
       this.showPermissionWarning();
       return;
     }
 
-    const result = this.auth.deleteCurrentUser();
+    const result = await this.auth.deleteCurrentUser();
     
     if (result.ok) {
       this.msg.add({
