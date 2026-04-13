@@ -8,6 +8,38 @@
   gap: 1.5rem;
 }
 
+/* ---- Hero header con color de marca ---- */
+.dash-hero {
+  background: #F54927;
+  border-radius: var(--erp-radius, 12px);
+  padding: 2rem 2rem 1.75rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+
+.dash-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  right: 60px;
+  width: 140px;
+  height: 140px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+
 /* ---- Cabecera ---- */
 .dash-header {
   display: flex;
@@ -23,26 +55,26 @@
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--erp-primary-strong);
+  color: rgba(255,255,255,0.75);
 }
 
 .dash-greeting h1 {
   margin: 0 0 0.35rem;
   font-size: 1.75rem;
   font-weight: 900;
-  color: var(--erp-ink);
+  color: #fff;
   letter-spacing: -0.02em;
 }
 
 .lead {
   margin: 0;
   font-size: 0.95rem;
-  color: #64748b;
+  color: rgba(255,255,255,0.88);
   line-height: 1.55;
 }
 
 .lead strong {
-  color: var(--erp-ink);
+  color: #fff;
 }
 
 .dash-header-actions {

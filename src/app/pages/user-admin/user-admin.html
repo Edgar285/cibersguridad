@@ -84,9 +84,9 @@
       </div>
     </div>
 
-    <!-- Permisos -->
+    <!-- Permisos globales -->
     <div class="perms-section">
-      <p class="perms-title"><i class="pi pi-shield"></i> Permisos</p>
+      <p class="perms-title"><i class="pi pi-shield"></i> Permisos globales</p>
       <div class="perm-categories">
         <div class="perm-category" *ngFor="let cat of permsByCategory; let i = index" [attr.data-cat]="i">
           <div class="perm-cat-header">
@@ -105,6 +105,47 @@
               <span class="perm-check-label">{{ p }}</span>
             </label>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permisos por grupo -->
+    <div class="perms-section" *ngIf="allGroups.length">
+      <p class="perms-title"><i class="pi pi-users"></i> Permisos por grupo</p>
+      <p style="font-size:0.83rem;color:#64748b;margin:0 0 0.75rem">Selecciona un grupo y configura los permisos específicos de este usuario en ese workspace.</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+        <button
+          *ngFor="let g of allGroups"
+          pButton
+          type="button"
+          [label]="g.nombre"
+          class="p-button-sm"
+          [class.p-button-outlined]="selectedGroupForPerms?.id !== g.id"
+          (click)="selectedGroupForPerms = g"></button>
+      </div>
+      <div *ngIf="selectedGroupForPerms">
+        <div class="perm-categories">
+          <div class="perm-category" *ngFor="let cat of permsByCategory">
+            <div class="perm-cat-header">
+              <i [class]="cat.icon"></i>
+              <span>{{ cat.label }}</span>
+            </div>
+            <div class="perm-checks">
+              <label
+                *ngFor="let p of cat.perms"
+                class="perm-check-item"
+                [class.perm-active]="hasGroupPerm(p)"
+                (click)="toggleGroupPerm(p)">
+                <span class="perm-check-box">
+                  <i class="pi" [class.pi-check]="hasGroupPerm(p)" [class.pi-minus]="!hasGroupPerm(p)"></i>
+                </span>
+                <span class="perm-check-label">{{ p }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem">
+          <button pButton type="button" label="Guardar permisos de grupo" icon="pi pi-check" class="p-button-success p-button-sm" (click)="saveGroupPerms()"></button>
         </div>
       </div>
     </div>

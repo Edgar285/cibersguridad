@@ -1,10 +1,12 @@
 import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot } from '@angular/router';
 import { Auth } from '../services/auth';
+import { PermissionService } from '../services/permission.service';
 import { Permission } from '../../models/permissions';
 
 export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, _state: RouterStateSnapshot) => {
   const auth = inject(Auth);
+  const permSvc = inject(PermissionService);
   const router = inject(Router);
 
   if (!auth.isLogged()) {
@@ -16,7 +18,9 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot, _state: 
   const logic = (route.data['permissionLogic'] as 'any' | 'all' | undefined) ?? 'any';
 
   if (required.length) {
-    const ok = logic === 'all' ? auth.hasPermissions(required) : auth.hasAnyPermission(required);
+    const ok = logic === 'all'
+      ? required.every(p => permSvc.hasPermission(p as string))
+      : required.some(p => permSvc.hasPermission(p as string));
     if (!ok) {
       router.navigate(['/dashboard']);
       return false;

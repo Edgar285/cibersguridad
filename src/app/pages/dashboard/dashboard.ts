@@ -18,12 +18,13 @@ import { TicketService } from '../../components/services/ticket.service';
 import { Ticket, TicketPriority, TicketStatus } from '../../models/ticket';
 import { Auth } from '../../components/services/auth';
 import { QuickFilters } from '../../components/filters/quick-filters';
+import { HasPermissionDirective } from '../../components/directives/has-permission.directive';
 import { Permission } from '../../models/permissions';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, RouterModule, CardModule, TagModule, TableModule, ProgressBarModule, SelectModule, DialogModule, ToastModule, MainLayout, QuickFilters],
+  imports: [CommonModule, FormsModule, ButtonModule, RouterModule, CardModule, TagModule, TableModule, ProgressBarModule, SelectModule, DialogModule, ToastModule, MainLayout, QuickFilters, HasPermissionDirective],
   providers: [MessageService],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
@@ -35,6 +36,8 @@ export class Dashboard {
   private router = inject(Router);
   private auth = inject(Auth);
   private msg = inject(MessageService);
+
+  protected permission = Permission;
 
   // Toggle de vista
   activeView = signal<'dashboard' | 'kanban'>('dashboard');
@@ -51,9 +54,7 @@ export class Dashboard {
 
   get isPrivileged(): boolean {
     return this.auth.hasAnyPermission([Permission.TicketsEdit]);
-  }
-
-  canEditTicket(ticket: Ticket): boolean {
+  }  canEditTicket(ticket: Ticket): boolean {
     return this.isPrivileged || ticket.assignedTo === this.me;
   }
 

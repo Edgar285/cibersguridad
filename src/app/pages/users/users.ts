@@ -207,7 +207,17 @@ export class Users implements OnInit {
   }
 
   resetForm() {
-    this.form.reset(this.form.value);
+    const current = this.auth.getCurrentUser();
+    if (!current) return;
+    this.form.patchValue({
+      fullName: current.fullName || '',
+      email: current.email,
+      username: current.username,
+      phone: current.phone || '',
+      address: current.address || ''
+    });
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   viewTicket(ticket: Ticket) {
@@ -238,8 +248,7 @@ export class Users implements OnInit {
 
   // Permission checks
   canEdit(): boolean {
-    return this.auth.hasAnyPermission([Permission.UsersEdit, Permission.UserEdit]);
-  }
+    return this.auth.hasAnyPermission([Permission.UsersEdit, Permission.UserEdit]);  }
 
   canDelete(): boolean {
     return this.auth.hasAnyPermission([Permission.UserDelete]);

@@ -21,7 +21,7 @@ import { Auth } from '../../../components/services/auth';
     ButtonModule,
     ToastModule,
   ],
-  providers: [],
+  providers: [MessageService],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -31,8 +31,20 @@ export class Login {
   private router = inject(Router);
   private msg = inject(MessageService);
 
-  // Mantén el formulario visible incluso si hay sesión activa (evita redirección automática).
+  private logoClickCount = 0;
+  private logoClickTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {}
+
+  onLogoClick() {
+    this.logoClickCount++;
+    if (this.logoClickTimer) clearTimeout(this.logoClickTimer);
+    this.logoClickTimer = setTimeout(() => { this.logoClickCount = 0; }, 2000);
+    if (this.logoClickCount >= 5) {
+      this.logoClickCount = 0;
+      this.msg.add({ severity: 'warn', summary: '👀 catch u', detail: 'catch u', life: 3000 });
+    }
+  }
 
   form = this.fb.group({
     userOrEmail: ['', Validators.required],
@@ -57,6 +69,6 @@ export class Login {
       return;
     }
 
-    this.router.navigate(['/group-select']);
+    this.router.navigate(['/dashboard']);
   }
 }

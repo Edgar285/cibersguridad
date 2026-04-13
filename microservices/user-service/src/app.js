@@ -80,7 +80,7 @@ function createApp() {
   app.post(
     '/api/v1/users/admin/users',
     requireAuth,
-    requirePermissions(['user-add', 'super-admin'], 'any'),
+    requirePermissions(['users:add', 'users:manage', 'super-admin'], 'any'),
     async (req, res, next) => {
       try {
         return send(res, 201, OP_CODES.SUCCESS, await service.createUser(req.body || {}));
@@ -93,7 +93,7 @@ function createApp() {
   app.get(
     '/api/v1/users/admin/users',
     requireAuth,
-    requirePermissions(['users-view', 'user-view', 'super-admin'], 'any'),
+    requirePermissions(['users:view', 'users:manage', 'super-admin'], 'any'),
     async (_req, res, next) => {
       try {
         return send(res, 200, OP_CODES.SUCCESS, await service.listUsers());
@@ -106,7 +106,7 @@ function createApp() {
   app.patch(
     '/api/v1/users/admin/users/:userId',
     requireAuth,
-    requirePermissions(['users-edit', 'user-edit', 'super-admin'], 'any'),
+    requirePermissions(['users:edit', 'users:manage', 'super-admin'], 'any'),
     async (req, res, next) => {
       try {
         return send(
@@ -124,7 +124,7 @@ function createApp() {
   app.delete(
     '/api/v1/users/admin/users/:userId',
     requireAuth,
-    requirePermissions(['user-delete', 'super-admin'], 'any'),
+    requirePermissions(['users:delete', 'users:manage', 'super-admin'], 'any'),
     async (req, res, next) => {
       try {
         return send(res, 200, OP_CODES.SUCCESS, await service.deleteUserAdmin(req.params.userId));
@@ -161,7 +161,7 @@ function createApp() {
   app.put(
     '/api/v1/users/:userId/permissions',
     requireAuth,
-    requirePermissions(['users-edit', 'user-edit', 'super-admin'], 'any'),
+    requirePermissions(['users:edit', 'users:manage', 'super-admin'], 'any'),
     async (req, res, next) => {
       try {
         const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];

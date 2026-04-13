@@ -1,6 +1,6 @@
 import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
 import { Permission } from '../../models/permissions';
-import { Auth } from '../services/auth';
+import { PermissionService } from '../services/permission.service';
 
 @Directive({
   selector: '[appHasPermission]',
@@ -13,7 +13,7 @@ export class HasPermissionDirective {
   constructor(
     private readonly templateRef: TemplateRef<unknown>,
     private readonly viewContainer: ViewContainerRef,
-    private readonly auth: Auth
+    private readonly permSvc: PermissionService
   ) {}
 
   @Input()
@@ -30,8 +30,8 @@ export class HasPermissionDirective {
 
   private updateView() {
     const allowed = this.mode === 'any'
-      ? this.auth.hasAnyPermission(this.required)
-      : this.auth.hasPermissions(this.required);
+      ? this.required.some(p => this.permSvc.hasPermission(p as string))
+      : this.required.every(p => this.permSvc.hasPermission(p as string));
 
     this.viewContainer.clear();
     if (allowed) this.viewContainer.createEmbeddedView(this.templateRef);

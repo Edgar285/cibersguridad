@@ -1,37 +1,39 @@
 <app-main-layout>
   <div class="dash-page">
 
-    <!-- ===== CABECERA ===== -->
-    <div class="dash-header">
-      <div class="dash-greeting">
-        <p class="eyebrow">Panel principal</p>
-        <h1>Hola, {{ currentUser()?.username ?? 'Usuario' }} 👋</h1>
-        <p class="lead">
-          <ng-container *ngIf="group(); else noGroupLead">
-            Estás en <strong>{{ group()!.nombre }}</strong> &mdash; Ve tickets, métricas y acciones rápidas.
-          </ng-container>
-          <ng-template #noGroupLead>Selecciona un grupo para ver sus tickets y métricas.</ng-template>
-        </p>
-      </div>
-      <div class="dash-header-actions">
-
-        <!-- Switch toggle Resumen / Kanban -->
-        <div class="view-switch" *ngIf="group()">
-          <span class="vs-label" [class.vs-active]="activeView() === 'dashboard'">
-            <i class="pi pi-chart-bar"></i> Resumen
-          </span>
-          <label class="vs-track" [class.vs-on]="activeView() === 'kanban'">
-            <input type="checkbox" [checked]="activeView() === 'kanban'"
-              (change)="activeView.set(activeView() === 'kanban' ? 'dashboard' : 'kanban')">
-            <span class="vs-thumb"></span>
-          </label>
-          <span class="vs-label" [class.vs-active]="activeView() === 'kanban'">
-            <i class="pi pi-th-large"></i> Kanban
-          </span>
+    <!-- ===== HERO / CABECERA (bg #F54927) ===== -->
+    <div class="dash-hero">
+      <div class="dash-header">
+        <div class="dash-greeting">
+          <p class="eyebrow">Panel principal</p>
+          <h1>Hola, {{ currentUser()?.username ?? 'Usuario' }} 👋</h1>
+          <p class="lead">
+            <ng-container *ngIf="group(); else noGroupLead">
+              Estás en <strong>{{ group()!.nombre }}</strong> &mdash; Ve tickets, métricas y acciones rápidas.
+            </ng-container>
+            <ng-template #noGroupLead>Selecciona un grupo para ver sus tickets y métricas.</ng-template>
+          </p>
         </div>
+        <div class="dash-header-actions">
 
-        <button pButton type="button" label="Cambiar grupo" icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="goSelect()"></button>
-        <button pButton type="button" label="Crear ticket" icon="pi pi-plus" class="p-button-success p-button-sm" (click)="goCreate()"></button>
+          <!-- Switch toggle Resumen / Kanban -->
+          <div class="view-switch" *ngIf="group()">
+            <span class="vs-label" [class.vs-active]="activeView() === 'dashboard'">
+              <i class="pi pi-chart-bar"></i> Resumen
+            </span>
+            <label class="vs-track" [class.vs-on]="activeView() === 'kanban'">
+              <input type="checkbox" [checked]="activeView() === 'kanban'"
+                (change)="activeView.set(activeView() === 'kanban' ? 'dashboard' : 'kanban')">
+              <span class="vs-thumb"></span>
+            </label>
+            <span class="vs-label" [class.vs-active]="activeView() === 'kanban'">
+              <i class="pi pi-th-large"></i> Kanban
+            </span>
+          </div>
+
+          <button pButton type="button" label="Cambiar grupo" icon="pi pi-refresh" class="p-button-outlined p-button-sm" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);color:#fff" (click)="goSelect()"></button>
+          <button *appHasPermission="permission.TicketAdd" pButton type="button" label="Crear ticket" icon="pi pi-plus" class="p-button-sm" style="background:#fff;color:#F54927;border:none;font-weight:700" (click)="goCreate()"></button>
+        </div>
       </div>
     </div>
 

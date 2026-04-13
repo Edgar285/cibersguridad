@@ -1,0 +1,14 @@
+{
+  "name": "group-service",
+  "version": "1.0.0",
+  "description": "Microservicio de grupos/workspaces - ERP",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

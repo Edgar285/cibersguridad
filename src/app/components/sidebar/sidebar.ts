@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
-import { Auth } from '../services/auth';
+import { PermissionService } from '../services/permission.service';
 import { Permission } from '../../models/permissions';
 
 @Component({
@@ -14,23 +14,26 @@ import { Permission } from '../../models/permissions';
   styleUrl: './sidebar.css'
 })
 export class Sidebar implements OnInit {
-  private auth = inject(Auth);
+  private permSvc = inject(PermissionService);
   readonly version = 'v0.0.0';
 
   items: MenuItem[] = [];
 
   ngOnInit() {
-    const isAdmin = this.auth.hasAnyPermission([Permission.GroupsView]);
+    const canManageGroups = this.permSvc.hasPermission(Permission.GroupsView) || this.permSvc.hasPermission(Permission.GroupsManage);
+    const canManageUsers  = this.permSvc.hasPermission(Permission.UsersView)  || this.permSvc.hasPermission(Permission.UsersManage);
 
     this.items = [
-      { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: '/dashboard' }
+      { label: 'Dashboard', icon: 'pi pi-chart-line', routerLink: '/dashboard' },
+      { label: 'Tickets',   icon: 'pi pi-ticket',     routerLink: '/tickets/list' }
     ];
 
-    if (isAdmin) {
-      this.items.push(
-        { label: 'Grupos',   icon: 'pi pi-users',    routerLink: '/groups' },
-        { label: 'Usuarios', icon: 'pi pi-user-edit', routerLink: '/users'  }
-      );
+    if (canManageGroups) {
+      this.items.push({ label: 'Grupos', icon: 'pi pi-users', routerLink: '/groups' });
+    }
+
+    if (canManageUsers) {
+      this.items.push({ label: 'Usuarios', icon: 'pi pi-user-edit', routerLink: '/users' });
     }
 
     this.items.push({ label: 'Perfil', icon: 'pi pi-user', routerLink: '/profile' });

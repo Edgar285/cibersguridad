@@ -65,6 +65,14 @@
                 (click)="openEdit(row)"
                 aria-label="Editar"></button>
               <button
+                pButton
+                type="button"
+                icon="pi pi-users"
+                class="p-button-text p-button-info"
+                (click)="openMembers(row)"
+                aria-label="Miembros"
+                pTooltip="Gestionar miembros"></button>
+              <button
                 *appHasPermission="[permission.GroupsDelete, permission.GroupDelete]; appHasPermissionMode: 'any'"
                 pButton
                 type="button"
@@ -79,30 +87,75 @@
     </p-card>
   </div>
 
-  <p-card header="Usuarios del grupo" class="list-card">
-    <div class="member-actions">
-      <input pInputText #email placeholder="usuario@correo.com" />
-      <button
-        *appHasPermission="permission.GroupsAdd"
-        pButton
-        type="button"
-        label="Agregar"
-        icon="pi pi-user-plus"
-        (click)="addMember(email.value); email.value = ''"></button>
+  <!-- ===== DIÁLOGO GESTIÓN DE MIEMBROS ===== -->
+  <p-dialog
+    [(visible)]="membersDialogVisible"
+    [modal]="true"
+    [style]="{ width: '680px' }"
+    [header]="'Miembros: ' + (selectedGroupForMembers()?.nombre ?? '')"
+    [draggable]="false">
+
+    <!-- Agregar nuevo miembro -->
+    <div *appHasPermission="permission.GroupsEdit" style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center">
+      <input pInputText [(ngModel)]="newMemberEmail" placeholder="usuario@correo.com" style="flex:1" />
+      <button pButton type="button" label="Agregar" icon="pi pi-user-plus" class="p-button-success p-button-sm" (click)="addMember()"></button>
     </div>
-    <ul class="member-list">
-      <li *ngFor="let m of members()">
-        {{ m }}
-        <button
-          *appHasPermission="permission.GroupDelete"
-          pButton
-          type="button"
-          icon="pi pi-times"
-          class="p-button-text p-button-danger"
-          (click)="removeMember(m)"></button>
-      </li>
-    </ul>
-  </p-card>
+
+    <!-- Tabla de miembros -->
+    <p-table [value]="currentMembers()" responsiveLayout="scroll" [tableStyle]="{'min-width':'400px'}">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Permisos en este grupo</th>
+          <th style="width:100px">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-m>
+        <tr>
+          <td>{{ m.username }}</td>
+          <td>{{ m.email }}</td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <span *ngFor="let p of m.permissions" style="background:#f0f4ff;border-radius:6px;padding:2px 8px;font-size:0.78rem;color:#3b5bdb">{{ p }}</span>
+              <span *ngIf="!m.permissions?.length" style="color:#94a3b8;font-size:0.82rem">Sin permisos</span>
+            </div>
+          </td>
+          <td>
+            <button *appHasPermission="permission.GroupsEdit" pButton type="button" icon="pi pi-shield" class="p-button-text p-button-sm" pTooltip="Editar permisos" (click)="openEditMemberPerms(m)"></button>
+            <button *appHasPermission="permission.GroupsEdit" pButton type="button" icon="pi pi-times" class="p-button-text p-button-danger p-button-sm" pTooltip="Quitar del grupo" (click)="removeMember(m)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:1.5rem">Sin miembros en este grupo</td></tr>
+      </ng-template>
+    </p-table>
+
+    <!-- Editar permisos del miembro seleccionado -->
+    <div *ngIf="editingMember()" style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem">
+      <p style="font-weight:700;margin-bottom:0.75rem"><i class="pi pi-shield" style="margin-right:6px"></i>Permisos de <strong>{{ editingMember()!.email }}</strong> en este grupo</p>
+      <div *ngFor="let cat of permsByCategory" style="margin-bottom:1rem">
+        <p style="font-size:0.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">
+          <i [class]="cat.icon" style="margin-right:4px"></i>{{ cat.label }}
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+          <label *ngFor="let p of cat.perms" style="display:flex;align-items:center;gap:6px;background:#f8fafc;border-radius:8px;padding:5px 10px;cursor:pointer;border:1px solid #e2e8f0" [style.background]="hasMemberPerm(p) ? '#eff6ff' : '#f8fafc'" [style.borderColor]="hasMemberPerm(p) ? '#3b82f6' : '#e2e8f0'">
+            <input type="checkbox" [checked]="hasMemberPerm(p)" (change)="toggleMemberPerm(p)" style="cursor:pointer" />
+            <span style="font-size:0.82rem">{{ p }}</span>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem">
+        <button pButton type="button" label="Cancelar" class="p-button-text p-button-sm" (click)="editingMember.set(null)"></button>
+        <button pButton type="button" label="Guardar permisos" icon="pi pi-check" class="p-button-success p-button-sm" (click)="saveMemberPerms()"></button>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button pButton type="button" label="Cerrar" class="p-button-text" (click)="membersDialogVisible = false"></button>
+    </ng-template>
+  </p-dialog>
 
   <p-dialog
     [(visible)]="dialogVisible"

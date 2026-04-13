@@ -32,7 +32,7 @@ type ApiEnvelope<T> = {
 
 @Injectable({ providedIn: 'root' })
 export class Auth {
-  private readonly apiBase = 'http://localhost:3001/api/v1/users';
+  private readonly apiBase = 'http://localhost:3000/api/v1/users';
   private readonly tokenKey = 'user-service-token';
   private readonly currentUserKey = 'user-service-current-user';
   private currentUser: User | null = this.loadCurrentUser();
@@ -49,7 +49,9 @@ export class Auth {
   }
 
   private setSession(token: string, user: User) {
-    localStorage.setItem(this.tokenKey, token);
+    // Token en cookie (SameSite=Strict, expira en 8 horas)
+    const expires = new Date(Date.now() + 8 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${this.tokenKey}=${encodeURIComponent(token)}; expires=${expires}; path=/; SameSite=Strict`;
     localStorage.setItem(this.currentUserKey, JSON.stringify(user));
     this.currentUser = user;
   }
@@ -60,9 +62,14 @@ export class Auth {
   }
 
   private clearSession() {
-    localStorage.removeItem(this.tokenKey);
+    document.cookie = `${this.tokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
     localStorage.removeItem(this.currentUserKey);
     this.currentUser = null;
+  }
+
+  getToken(): string | null {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + this.tokenKey + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
   }
 
   private mapUser(user: Partial<User>): User {
@@ -84,7 +91,7 @@ export class Auth {
     headers.set('Content-Type', 'application/json');
 
     if (auth) {
-      const token = localStorage.getItem(this.tokenKey);
+      const token = this.getToken();
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
@@ -248,7 +255,13 @@ export class Auth {
   }
 
   isLogged() {
-    return !!localStorage.getItem(this.tokenKey) && !!this.currentUser;
+    return !!this.getToken() && !!this.currentUser;
+  }
+
+  hasPermission(permission: string): boolean {
+    const current = this.getCurrentUser();
+    if (!current) return false;
+    return (current.permissions as string[]).includes(permission);
   }
 
   hasPermissions(required: Permission[]) {

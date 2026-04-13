@@ -7,7 +7,8 @@
     </div>
   </div>
 
-  <div class="filters" *ngIf="isPrivileged">
+  @if (isPrivileged) {
+  <div class="filters">
     <p-select
       [options]="statuses"
       optionLabel="label"
@@ -23,7 +24,6 @@
   </div>
 
   <app-quick-filters
-    *ngIf="isPrivileged"
     [filters]="[
       { key: 'mine', label: 'Mis tickets' },
       { key: 'unassigned', label: 'Sin asignar' },
@@ -31,8 +31,11 @@
     ]"
     [active]="quickFilter()"
     (change)="quickFilter.set($event)"></app-quick-filters>
+  }
 
-  <p-table [value]="tickets()" responsiveLayout="scroll" sortMode="multiple">
+  <p-table [value]="tickets()" responsiveLayout="scroll" sortMode="multiple"
+           [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+           [showCurrentPageReport]="true" currentPageReportTemplate="{first}-{last} de {totalRecords}">
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>

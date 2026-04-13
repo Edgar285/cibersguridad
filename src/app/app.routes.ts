@@ -32,8 +32,7 @@ export const routes: Routes = [
     component: Groups,
     canActivate: [authGuard],
     data: {
-      // Admin o superior (usuarios normales no tienen GroupsView)
-      permissions: [Permission.GroupsView],
+      permissions: [Permission.GroupsView, Permission.GroupsManage],
       permissionLogic: 'any'
     }
   },
@@ -42,8 +41,7 @@ export const routes: Routes = [
     component: UserAdmin,
     canActivate: [authGuard],
     data: {
-      // Admin o superior (usuarios normales no tienen GroupsView)
-      permissions: [Permission.GroupsView],
+      permissions: [Permission.UsersView, Permission.UsersManage],
       permissionLogic: 'any'
     }
   },

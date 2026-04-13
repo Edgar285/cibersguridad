@@ -1,23 +1,20 @@
 const DEFAULT_PERMISSIONS = [
   'super-admin',
-  'groups-view',
-  'group-view',
-  'groups-edit',
-  'groups-delete',
-  'groups-add',
-  'group-delete',
-  'group-add',
-  'user-view',
-  'users-view',
-  'users-edit',
-  'user-edit',
-  'user-delete',
-  'user-add',
-  'ticket-view',
-  'tickets-view',
-  'tickets-edit',
-  'ticket-edit',
-  'ticket-delete'
+  'groups:view',
+  'groups:add',
+  'groups:edit',
+  'groups:delete',
+  'groups:manage',
+  'users:view',
+  'users:add',
+  'users:edit',
+  'users:delete',
+  'users:manage',
+  'tickets:view',
+  'tickets:add',
+  'tickets:edit',
+  'tickets:delete',
+  'tickets:move'
 ];
 
 function createConfig() {
