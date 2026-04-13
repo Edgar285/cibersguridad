@@ -68,3 +68,28 @@ values
   ('ticket-edit', 'Editar ticket'),
   ('ticket-delete', 'Eliminar ticket')
 on conflict (code) do nothing;
+
+-- ── Tablas de logs centralizados y métricas (puntos extra) ────────────────────
+
+create table if not exists request_logs (
+  id               uuid        primary key default gen_random_uuid(),
+  endpoint         text        not null,
+  method           varchar(10) not null,
+  user_id          text,
+  user_email       text,
+  ip               text,
+  status_code      int,
+  response_time_ms int,
+  created_at       timestamptz not null default now()
+);
+
+create table if not exists error_logs (
+  id            uuid        primary key default gen_random_uuid(),
+  endpoint      text        not null,
+  method        varchar(10) not null,
+  user_id       text,
+  ip            text,
+  error_message text,
+  stack_trace   text,
+  created_at    timestamptz not null default now()
+);

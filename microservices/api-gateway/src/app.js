@@ -4,7 +4,21 @@ const rateLimit = require('@fastify/rate-limit');
 const jwt = require('jsonwebtoken');
 const http = require('http');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
+// Cargar .env del gateway ANTES de cualquier otro require que use process.env
+(function loadEnv() {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const [k, ...v] = line.split('=');
+    if (k && v.length && !process.env[k.trim()]) process.env[k.trim()] = v.join('=').trim();
+  }
+})();
+
 const { ROUTES } = require('./routes');
+const { initTables, logRequest, logError, getMetrics } = require('./logger');
 
 function send(reply, statusCode, intOpCode, data) {
   return reply.status(statusCode).send({ statusCode, intOpCode, data });
@@ -78,6 +92,9 @@ async function buildGateway() {
     GROUP_SERVICE:  process.env.GROUP_SERVICE_URL  || 'http://localhost:3003'
   };
 
+  // Inicializar tablas de logs en Supabase
+  await initTables();
+
   const app = Fastify({ logger: true });
 
   // ── CORS ──────────────────────────────────────────────────────
@@ -106,6 +123,12 @@ async function buildGateway() {
     return send(reply, 200, OP.SUCCESS, { service: 'api-gateway', status: 'ok' });
   });
 
+  // ── Métricas centralizadas ────────────────────────────────────
+  app.get('/metrics', async (_req, reply) => {
+    const data = await getMetrics();
+    return send(reply, 200, OP.SUCCESS, data);
+  });
+
   // ── Proxy handler genérico ─────────────────────────────────────
   // OPTIONS lo maneja @fastify/cors, no lo registramos aquí
   const proxyMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'];
@@ -120,6 +143,7 @@ async function buildGateway() {
     });
 
     if (!rule) {
+      logRequest({ endpoint: url, method, userId: null, userEmail: null, ip: request.ip, statusCode: 404, responseTimeMs: 0 });
       return send(reply, 404, OP.NOT_FOUND, { message: `No route for ${method} ${url}` });
     }
 
@@ -128,11 +152,13 @@ async function buildGateway() {
     if (rule.auth) {
       const authHeader = request.headers['authorization'];
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        logRequest({ endpoint: url, method, userId: null, userEmail: null, ip: request.ip, statusCode: 401, responseTimeMs: 0 });
         return send(reply, 401, OP.UNAUTHORIZED, { message: 'Token requerido' });
       }
       try {
         user = jwt.verify(authHeader.slice(7), jwtSecret);
       } catch {
+        logRequest({ endpoint: url, method, userId: null, userEmail: null, ip: request.ip, statusCode: 401, responseTimeMs: 0 });
         return send(reply, 401, OP.UNAUTHORIZED, { message: 'Token inválido o expirado' });
       }
     }
@@ -141,19 +167,42 @@ async function buildGateway() {
     if (rule.permission) {
       const perms = user?.permissions ?? [];
       if (!perms.includes(rule.permission)) {
+        logRequest({ endpoint: url, method, userId: user?.sub, userEmail: user?.email, ip: request.ip, statusCode: 403, responseTimeMs: 0 });
         return send(reply, 403, OP.FORBIDDEN, {
           message: `Permiso requerido: ${rule.permission}`
         });
       }
     }
 
-    // Reenviar al microservicio
+    // Reenviar al microservicio con timing para logs
+    const startTime = Date.now();
     const upstreamBase = upstreams[rule.upstream];
-    return proxyRequest(request, reply, upstreamBase);
+    const result = await proxyRequest(request, reply, upstreamBase);
+    const responseTimeMs = Date.now() - startTime;
+
+    logRequest({
+      endpoint: url,
+      method,
+      userId: user?.sub || null,
+      userEmail: user?.email || null,
+      ip: request.ip,
+      statusCode: reply.statusCode,
+      responseTimeMs
+    });
+
+    return result;
   }});
 
-  app.setErrorHandler((error, _req, reply) => {
+  app.setErrorHandler((error, req, reply) => {
     const statusCode = error.statusCode ?? 500;
+    logError({
+      endpoint: req.url || '/',
+      method: req.method || 'GET',
+      userId: null,
+      ip: req.ip,
+      errorMessage: error.message ?? 'Error interno',
+      stackTrace: error.stack || null
+    });
     return send(reply, statusCode, OP.INTERNAL, { message: error.message ?? 'Error interno' });
   });
 
