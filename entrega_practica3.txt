@@ -13,8 +13,8 @@ Frontend + Backend (monorepo):
 ÚLTIMO COMMIT
 ================================================================
 
-Mensaje: feat: implementar requerimientos ERP - permisos colon format, PermissionService, dashboard #F54927, admin groups/users permisos por grupo, API Gateway, microservicios
-Hash: 5c08a5d
+Mensaje: feat(extra): logs centralizados y metricas en Supabase - logRequest, logError, GET /metrics
+Hash: cead9d2
 
 ================================================================
 ARQUITECTURA DE MICROSERVICIOS (local)
