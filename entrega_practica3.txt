@@ -1,11 +1,102 @@
-Entrega - Practica 3
+Entrega - Proyecto ERP (ERPJir)
 
-Repositorio del proyecto:
-PEGAR_AQUI_LINK_DEL_REPOSITORIO
+================================================================
+REPOSITORIOS
+================================================================
 
-Commit solicitado:
-Mensaje: Practica 3
-Hash: PEGAR_AQUI_HASH_DEL_COMMIT
+Frontend + Backend (monorepo):
+  URL: https://github.com/Edgar285/cibersguridad
+  Rama: master
+  Acceso: público
 
-Notas:
-- El repositorio incluye las prácticas realizadas en clase.
+================================================================
+ÚLTIMO COMMIT
+================================================================
+
+Mensaje: feat: implementar requerimientos ERP - permisos colon format, PermissionService, dashboard #F54927, admin groups/users permisos por grupo, API Gateway, microservicios
+Hash: 5c08a5d
+
+================================================================
+ARQUITECTURA DE MICROSERVICIOS (local)
+================================================================
+
+API Gateway      : http://localhost:3000
+User Service     : http://localhost:3001
+Ticket Service   : http://localhost:3002
+Group Service    : http://localhost:3003
+Frontend Angular : http://localhost:4200
+
+================================================================
+API GATEWAY - ENDPOINTS PRINCIPALES
+================================================================
+
+[GET]  http://localhost:3000/health
+  Body: ninguno
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { service: 'api-gateway', status: 'ok' } }
+
+[POST] http://localhost:3000/api/v1/users/auth/login
+  Body: { "userOrEmail": "super@erp.com", "password": "Super123!" }
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { token: "...", user: {...} } }
+
+[POST] http://localhost:3000/api/v1/users/auth/register
+  Body: { "username": "string", "email": "email", "password": "string", "fullName": "string", "address": "string", "phone": "string", "birthdate": "YYYY-MM-DD" }
+  Respuesta: { statusCode: 201, intOpCode: 0, data: { token: "...", user: {...} } }
+
+[GET]  http://localhost:3000/api/v1/users
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: users:view
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { users: [...] } }
+
+[GET]  http://localhost:3000/api/v1/groups
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: groups:view
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { groups: [...] } }
+
+[POST] http://localhost:3000/api/v1/groups
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: groups:add
+  Body: { "nombre": "string", "descripcion": "string" }
+  Respuesta: { statusCode: 201, intOpCode: 0, data: { group: {...} } }
+
+[GET]  http://localhost:3000/api/v1/tickets
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: tickets:view
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { tickets: [...] } }
+
+[POST] http://localhost:3000/api/v1/tickets
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: tickets:add
+  Body: { "title": "string", "description": "string", "groupId": "uuid", "priority": "low|medium|high", "assignedTo": "email" }
+  Respuesta: { statusCode: 201, intOpCode: 0, data: { ticket: {...} } }
+
+[PATCH] http://localhost:3000/api/v1/tickets/:id/status
+  Headers: Authorization: Bearer <token>
+  Permisos requeridos: tickets:move (y ticket asignado al usuario)
+  Body: { "status": "pending|in-progress|review|done|blocked" }
+  Respuesta: { statusCode: 200, intOpCode: 0, data: { ticket: {...} } }
+
+================================================================
+CREDENCIALES DE PRUEBA (Supabase)
+================================================================
+
+Email: super@erp.com
+Password: Super123!
+Rol: Super Admin (todos los permisos)
+
+================================================================
+ESQUEMA JSON UNIVERSAL
+================================================================
+
+{
+  "statusCode": 200,
+  "intOpCode": 0,
+  "data": { ... }
+}
+
+Códigos de error:
+  400 - Validación fallida
+  401 - Token requerido o inválido
+  403 - Permiso insuficiente
+  404 - Recurso no encontrado
+  429 - Rate limit excedido (100 req/min)
+  500 - Error interno
