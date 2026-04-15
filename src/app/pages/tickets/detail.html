@@ -72,7 +72,7 @@
       </div>
 
       <h4>Comentarios</h4>
-      <div *ngIf="ticket.comments?.length; else noComments">
+      <div *ngIf="ticket.comments.length; else noComments">
         <ul>
           <li *ngFor="let c of ticket.comments">
             <strong>{{ c.author }}</strong> — {{ c.message }}
@@ -87,7 +87,7 @@
       </div>
 
       <h4>Historial</h4>
-      <div *ngIf="ticket.history?.length; else noHistory">
+      <div *ngIf="ticket.history.length; else noHistory">
         <ul>
           <li *ngFor="let h of ticket.history">
             <strong>{{ h.field }}</strong>: {{ h.from || '—' }} → {{ h.to || '—' }}

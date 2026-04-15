@@ -202,8 +202,8 @@ export class Dashboard implements OnInit {
     const canManageUsers = this.permSvc.hasPermission(Permission.UsersView as string)
                         || this.permSvc.hasPermission(Permission.UsersManage as string);
     return [
-      ...(canViewGroups  ? [{ label: 'Ver grupos',           icon: 'pi pi-users',     action: null, route: '/groups' }] : []),
-      ...(canManageUsers ? [{ label: 'Administrar usuarios', icon: 'pi pi-user-edit', action: null, route: '/users'  }] : [])
+      ...(canViewGroups  ? [{ label: 'Ver grupos',           icon: 'pi pi-users',     route: '/groups' }] : []),
+      ...(canManageUsers ? [{ label: 'Administrar usuarios', icon: 'pi pi-user-edit', route: '/users'  }] : [])
     ];
   });
 

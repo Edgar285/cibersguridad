@@ -132,8 +132,7 @@
               [label]="a.label"
               [icon]="a.icon"
               class="p-button-outlined quick-btn"
-              (click)="a.action ? a.action() : null"
-              [routerLink]="a.route ?? null"
+              [routerLink]="a.route"
             ></button>
           </div>
         </p-card>
