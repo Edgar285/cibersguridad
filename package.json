@@ -34,6 +34,7 @@
     "@angular/platform-server": "^20.3.17",
     "@angular/router": "^20.3.17",
     "@angular/ssr": "^20.3.16",
+    "chart.js": "^4.5.1",
     "express": "^5.1.0",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",

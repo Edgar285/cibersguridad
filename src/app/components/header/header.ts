@@ -6,6 +6,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
 import { Auth } from '../services/auth';
 import { Permission } from '../../models/permissions';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -16,6 +17,7 @@ import { Permission } from '../../models/permissions';
 })
 export class Header implements OnInit {
   private auth = inject(Auth);
+  private router = inject(Router);
 
   items: MenuItem[] = [];
 
@@ -52,5 +54,10 @@ export class Header implements OnInit {
     });
 
     this.items = base;
+  }
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

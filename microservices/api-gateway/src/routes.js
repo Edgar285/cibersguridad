@@ -19,10 +19,14 @@ const ROUTES = [
   { method: 'GET',  pathPrefix: '/api/v1/users',               upstream: 'USER_SERVICE',   auth: true,  permission: null },
 
   // ── Tickets ───────────────────────────────────────────────────
-  { method: 'POST',  pathPrefix: '/api/v1/tickets',            upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:add' },
-  { method: 'PATCH', pathPrefix: '/api/v1/tickets',            upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:edit' },
-  { method: 'DELETE',pathPrefix: '/api/v1/tickets',            upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:delete' },
-  { method: 'GET',   pathPrefix: '/api/v1/tickets',            upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:view' },
+  { method: 'POST',  pathPrefix: '/api/v1/tickets',                   upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:add' },
+  { method: 'POST',  pathPrefix: '/api/v1/tickets/',                  upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:view',
+    pathSuffix: '/comments' },
+  { method: 'PATCH', pathPrefix: '/api/v1/tickets/',                  upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:move',
+    pathSuffix: '/status' },
+  { method: 'PATCH', pathPrefix: '/api/v1/tickets',                   upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:edit' },
+  { method: 'DELETE',pathPrefix: '/api/v1/tickets',                   upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:delete' },
+  { method: 'GET',   pathPrefix: '/api/v1/tickets',                   upstream: 'TICKET_SERVICE', auth: true, permission: 'tickets:view' },
 
   // ── Groups ────────────────────────────────────────────────────
   { method: 'POST',  pathPrefix: '/api/v1/groups',             upstream: 'GROUP_SERVICE',  auth: true, permission: 'groups:add' },

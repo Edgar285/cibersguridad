@@ -50,10 +50,10 @@ export class TicketDetail implements OnInit {
   comment = '';
   dueDateValue: Date | null = null;
 
-  ngOnInit() {
+  async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) return;
-    this.ticket = this.tickets.get(id);
+    this.ticket = await this.tickets.loadOne(id);
     if (this.ticket?.dueDate) this.dueDateValue = new Date(this.ticket.dueDate);
   }
 
@@ -91,54 +91,79 @@ export class TicketDetail implements OnInit {
     return !!this.actorEmail();
   }
 
-  updateStatus(status: TicketStatus) {
+  async updateStatus(status: TicketStatus) {
     if (!this.ticket || !this.canChangeStatus) return;
-    this.ticket = this.tickets.update(this.ticket.id, { status }, this.actorEmail() ?? undefined);
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { status }, this.actorEmail() ?? undefined);
+      if (updated) this.ticket = updated;
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo actualizar estado' });
+    }
   }
 
-  updatePriority(priority: TicketPriority) {
+  async updatePriority(priority: TicketPriority) {
     if (!this.ticket || !this.canEditAll) return;
-    this.ticket = this.tickets.update(this.ticket.id, { priority }, this.actorEmail() ?? undefined);
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { priority }, this.actorEmail() ?? undefined);
+      if (updated) this.ticket = updated;
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo actualizar prioridad' });
+    }
   }
 
-  assignMe() {
+  async assignMe() {
     if (!this.ticket || !this.canEditAll) return;
     const me = this.auth.getCurrentUser()?.email;
     if (!me) return;
-    this.ticket = this.tickets.update(this.ticket.id, { assignedTo: me }, me);
-    this.msg.add({ severity: 'success', summary: 'Asignado', detail: 'Te asignaste el ticket.' });
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { assignedTo: me }, me);
+      if (updated) this.ticket = updated;
+      this.msg.add({ severity: 'success', summary: 'Asignado', detail: 'Te asignaste el ticket.' });
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo asignar' });
+    }
   }
 
-  delete() {
+  async delete() {
     if (!this.ticket || !this.canEditAll) return;
-    this.tickets.delete(this.ticket.id);
-    this.msg.add({ severity: 'success', summary: 'Ticket', detail: 'Eliminado' });
-    setTimeout(() => this.router.navigate(['/tickets/list']), 300);
+    const ok = await this.tickets.delete(this.ticket.id);
+    if (ok) {
+      this.msg.add({ severity: 'success', summary: 'Ticket', detail: 'Eliminado' });
+      setTimeout(() => this.router.navigate(['/tickets/list']), 300);
+    }
   }
 
-  addComment() {
+  async addComment() {
     if (!this.ticket || !this.comment.trim() || !this.canComment) return;
     const author = this.actorEmail() ?? 'system';
-    this.tickets.addComment(this.ticket.id, { author, message: this.comment.trim() });
-    const updated = this.tickets.get(this.ticket.id);
-    if (updated) this.ticket = updated;
+    await this.tickets.addComment(this.ticket.id, { author, message: this.comment.trim() });
+    this.ticket = this.tickets.get(this.ticket.id);
     this.comment = '';
   }
 
-  updateTitle(value: string) {
+  async updateTitle(value: string) {
     if (!this.ticket || !this.canEditAll || !value.trim()) return;
-    this.ticket = this.tickets.update(this.ticket.id, { title: value.trim() }, this.actorEmail() ?? undefined);
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { title: value.trim() }, this.actorEmail() ?? undefined);
+      if (updated) this.ticket = updated;
+    } catch { /* silencioso */ }
   }
 
-  updateDescription(value: string) {
+  async updateDescription(value: string) {
     if (!this.ticket || !this.canEditAll || !value.trim()) return;
-    this.ticket = this.tickets.update(this.ticket.id, { description: value.trim() }, this.actorEmail() ?? undefined);
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { description: value.trim() }, this.actorEmail() ?? undefined);
+      if (updated) this.ticket = updated;
+    } catch { /* silencioso */ }
   }
 
-  updateDueDate(value: Date | null) {
+  async updateDueDate(value: Date | null) {
     if (!this.ticket || !this.canEditAll) return;
     const iso = value ? new Date(value).toISOString() : undefined;
     this.dueDateValue = value;
-    this.ticket = this.tickets.update(this.ticket.id, { dueDate: iso }, this.actorEmail() ?? undefined);
+    try {
+      const updated = await this.tickets.update(this.ticket.id, { dueDate: iso }, this.actorEmail() ?? undefined);
+      if (updated) this.ticket = updated;
+    } catch { /* silencioso */ }
   }
 }

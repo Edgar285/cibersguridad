@@ -77,6 +77,21 @@ function createMemoryTicketRepository() {
 
     delete(id) {
       return store.delete(id);
+    },
+
+    addComment(ticketId, comment) {
+      const ticket = store.get(ticketId);
+      if (!ticket) return null;
+      const { randomUUID: uuid } = require('crypto');
+      const newComment = {
+        id: uuid(),
+        author: comment.author,
+        message: comment.message,
+        at: new Date().toISOString()
+      };
+      const updated = { ...ticket, comments: [...ticket.comments, newComment] };
+      store.set(ticketId, updated);
+      return updated;
     }
   };
 }

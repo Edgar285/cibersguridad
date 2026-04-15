@@ -6,6 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { Router } from '@angular/router';
 import { GroupService, Group } from '../../components/services/group.service';
 import { GroupContextService } from '../../components/services/group-context.service';
+import { PermissionService } from '../../components/services/permission.service';
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 
 @Component({
@@ -18,40 +19,19 @@ import { MainLayout } from '../../layouts/main-layout/main-layout';
 export class GroupSelect implements OnInit {
   private groupsSvc = inject(GroupService);
   private ctx = inject(GroupContextService);
+  private permSvc = inject(PermissionService);
   private router = inject(Router);
 
   groups: Group[] = [];
 
-  ngOnInit() {
+  async ngOnInit() {
+    await this.groupsSvc.load();
     this.groups = this.groupsSvc.list();
-    if (!this.groups.length) {
-      const seed = [
-        {
-          nombre: 'Ventas Norte',
-          nivel: 'Estratégico',
-          actor: 'Líder ventas',
-          integrantes: 10,
-          tickets: 5,
-          descripcion: 'Cuentas clave y pipeline',
-          estado: 'success' as const
-        },
-        {
-          nombre: 'Soporte TI',
-          nivel: 'Operativo',
-          actor: 'Mesa de ayuda',
-          integrantes: 8,
-          tickets: 12,
-          descripcion: 'Incidentes y cambios',
-          estado: 'agree' as const
-        }
-      ];
-      seed.forEach(s => this.groupsSvc.create(s));
-      this.groups = this.groupsSvc.list();
-    }
   }
 
   select(group: Group) {
     this.ctx.set(group.id);
+    this.permSvc.refreshPermissionsForGroup(group.id);
     this.router.navigate(['/dashboard']);
   }
 }

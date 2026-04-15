@@ -72,14 +72,11 @@ export class PermissionService {
           this.groupPermissions.set(groupId, myEntry.permissions);
         }
       })
-      .catch(() => {
-        // En modo memoria, el endpoint puede no estar disponible; ignorar
-      });
+      .catch(() => { /* silencioso */ });
   }
 
   /**
-   * Establece los permisos de un usuario en un grupo (por grupo).
-   * Usado desde la UI de admin.
+   * Establece los permisos de un usuario en un grupo.
    */
   setGroupPermissionsForUser(groupId: string, userId: string, permissions: string[]): Promise<boolean> {
     const token = this.auth.getToken();

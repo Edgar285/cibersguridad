@@ -125,6 +125,11 @@ export class Groups implements OnInit {
   });
 
   ngOnInit() {
+    void this.loadGroups();
+  }
+
+  private async loadGroups() {
+    await this.groupsSvc.load();
     const loaded = this.groupsSvc.list();
     if (!loaded.length) { this.seed(); return; }
     this.groups.set(loaded);
@@ -154,7 +159,7 @@ export class Groups implements OnInit {
     this.dialogVisible = true;
   }
 
-  save() {
+  async save() {
     if (this.editingId && !this.canEdit()) {
       this.msg.add({ severity: 'warn', summary: 'Permisos', detail: 'No puedes editar grupos.' });
       return;
@@ -169,18 +174,20 @@ export class Groups implements OnInit {
       return;
     }
     const payload = this.form.value as GroupInput;
-    if (this.editingId) {
-      const updated = this.groupsSvc.update(this.editingId, payload);
-      if (updated) {
+    try {
+      if (this.editingId) {
+        const updated = await this.groupsSvc.update(this.editingId, payload);
         this.groups.set(this.groups().map(g => g.id === updated.id ? updated : g));
         this.msg.add({ severity: 'success', summary: 'Grupos', detail: 'Grupo actualizado' });
+      } else {
+        const created = await this.groupsSvc.create(payload);
+        this.groups.set([...this.groups(), created]);
+        this.msg.add({ severity: 'success', summary: 'Grupos', detail: 'Grupo creado' });
       }
-    } else {
-      const created = this.groupsSvc.create(payload);
-      this.groups.set([...this.groups(), created]);
-      this.msg.add({ severity: 'success', summary: 'Grupos', detail: 'Grupo creado' });
+      this.dialogVisible = false;
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo guardar el grupo' });
     }
-    this.dialogVisible = false;
   }
 
   confirmDelete(group: Group) {
@@ -198,12 +205,16 @@ export class Groups implements OnInit {
     });
   }
 
-  private deleteGroup(group: Group) {
+  private async deleteGroup(group: Group) {
     if (!this.canDelete()) return;
-    const removed = this.groupsSvc.delete(group.id);
-    if (removed) {
-      this.groups.set(this.groups().filter(g => g.id !== group.id));
-      this.msg.add({ severity: 'success', summary: 'Grupos', detail: 'Grupo eliminado' });
+    try {
+      const removed = await this.groupsSvc.delete(group.id);
+      if (removed) {
+        this.groups.set(this.groups().filter(g => g.id !== group.id));
+        this.msg.add({ severity: 'success', summary: 'Grupos', detail: 'Grupo eliminado' });
+      }
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo eliminar' });
     }
   }
 
@@ -216,7 +227,7 @@ export class Groups implements OnInit {
     this.membersDialogVisible = true;
   }
 
-  addMember() {
+  async addMember() {
     const email = this.newMemberEmail.trim();
     if (!email) return;
     const group = this.selectedGroupForMembers()!;
@@ -237,15 +248,13 @@ export class Groups implements OnInit {
     this.groupMembersMap.set(map);
     this.newMemberEmail = '';
 
-    // Persistir en el backend (group-service)
-    this.permSvc.setGroupPermissionsForUser(group.id, newMember.userId, newMember.permissions)
-      .catch(() => { /* silencioso en modo memoria */ });
-
+    await this.groupsSvc.setMemberPermissions(group.id, newMember.userId, newMember.permissions);
     this.msg.add({ severity: 'success', summary: 'Miembros', detail: `${email} agregado al grupo.` });
   }
 
-  removeMember(member: GroupMember) {
+  async removeMember(member: GroupMember) {
     const group = this.selectedGroupForMembers()!;
+    await this.groupsSvc.removeMember(group.id, member.userId);
     const current = this.groupMembersMap().get(group.id) ?? [];
     const map = new Map(this.groupMembersMap());
     map.set(group.id, current.filter(m => m.userId !== member.userId));
@@ -268,7 +277,7 @@ export class Groups implements OnInit {
     this.memberPermSet.set(set);
   }
 
-  saveMemberPerms() {
+  async saveMemberPerms() {
     const member = this.editingMember();
     const group  = this.selectedGroupForMembers();
     if (!member || !group) return;
@@ -279,9 +288,7 @@ export class Groups implements OnInit {
     map.set(group.id, current.map(m => m.userId === member.userId ? { ...m, permissions: newPerms } : m));
     this.groupMembersMap.set(map);
 
-    // Persistir en backend
-    this.permSvc.setGroupPermissionsForUser(group.id, member.userId, newPerms)
-      .catch(() => { /* silencioso en modo memoria */ });
+    await this.groupsSvc.setMemberPermissions(group.id, member.userId, newPerms);
 
     this.editingMember.set(null);
     this.msg.add({ severity: 'success', summary: 'Permisos', detail: 'Permisos actualizados.' });
@@ -294,12 +301,8 @@ export class Groups implements OnInit {
   }
 
   private seed() {
-    const seedData: GroupInput[] = [
-      { nombre: 'Ventas Norte',  actor: 'María Torres', nivel: 'Estratégico', integrantes: 12, tickets: 3,  descripcion: 'Pipeline y cuentas clave en la región norte.', estado: 'success' },
-      { nombre: 'Soporte TI',    actor: 'Luis Romero',  nivel: 'Operativo',   integrantes: 8,  tickets: 11, descripcion: 'Mesa de ayuda y seguimiento de incidentes.',    estado: 'agree'   },
-      { nombre: 'Finanzas',      actor: 'Ana López',    nivel: 'Táctico',     integrantes: 6,  tickets: 1,  descripcion: 'Control de gastos, presupuestos y reportes.',   estado: 'x'       }
-    ];
-    seedData.forEach(item => this.groupsSvc.create(item));
-    this.groups.set(this.groupsSvc.list());
+    // En modo backend, no hacemos seed desde el frontend
+    // El backend arranca con estado vacío, el usuario debe crear grupos
+    this.groups.set([]);
   }
 }

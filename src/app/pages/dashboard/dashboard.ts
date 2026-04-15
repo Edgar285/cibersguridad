@@ -1,7 +1,8 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
 import { Router, RouterModule } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
@@ -24,12 +25,12 @@ import { Permission } from '../../models/permissions';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, RouterModule, CardModule, TagModule, TableModule, ProgressBarModule, SelectModule, DialogModule, ToastModule, MainLayout, QuickFilters, HasPermissionDirective],
+  imports: [CommonModule, FormsModule, ButtonModule, RouterModule, CardModule, TagModule, TableModule, ProgressBarModule, SelectModule, DialogModule, ToastModule, ChartModule, MainLayout, QuickFilters, HasPermissionDirective],
   providers: [MessageService],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   private ctx = inject(GroupContextService);
   private groups = inject(GroupService);
   private tickets = inject(TicketService);
@@ -54,12 +55,22 @@ export class Dashboard {
 
   get isPrivileged(): boolean {
     return this.auth.hasAnyPermission([Permission.TicketsEdit]);
-  }  canEditTicket(ticket: Ticket): boolean {
+  }
+
+  canEditTicket(ticket: Ticket): boolean {
     return this.isPrivileged || ticket.assignedTo === this.me;
   }
 
   statuses = this.tickets.statuses();
   priorities: TicketPriority[] = this.tickets.priorities();
+
+  constructor() {
+    // Recargar tickets del backend cuando cambia el grupo activo
+    effect(() => {
+      const id = this.ctx.get();
+      if (id) void this.tickets.loadByGroup(id);
+    });
+  }
 
   kanbanTickets = computed(() => {
     const g = this.group();
@@ -88,31 +99,39 @@ export class Dashboard {
     this.dialogVisible = true;
   }
 
-  changeStatus(ticket: Ticket, status: TicketStatus) {
+  async changeStatus(ticket: Ticket, status: TicketStatus) {
     if (!this.canEditTicket(ticket)) return;
-    const updated = this.tickets.update(ticket.id, { status }, this.me);
-    if (updated) this.selectedTicket.set(updated);
+    try {
+      const updated = await this.tickets.update(ticket.id, { status }, this.me);
+      if (updated) this.selectedTicket.set(updated);
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo mover el ticket' });
+    }
   }
 
-  updatePriority(ticket: Ticket, priority: TicketPriority) {
+  async updatePriority(ticket: Ticket, priority: TicketPriority) {
     if (!this.canEditTicket(ticket)) return;
-    const updated = this.tickets.update(ticket.id, { priority }, this.me);
-    if (updated) this.selectedTicket.set(updated);
+    try {
+      const updated = await this.tickets.update(ticket.id, { priority }, this.me);
+      if (updated) this.selectedTicket.set(updated);
+    } catch { /* silencioso */ }
   }
 
-  assignMe(ticket: Ticket) {
+  async assignMe(ticket: Ticket) {
     const me = this.me;
     if (!me) return;
-    const updated = this.tickets.update(ticket.id, { assignedTo: me }, me);
-    if (updated) this.selectedTicket.set(updated);
-    this.msg.add({ severity: 'success', summary: 'Asignación', detail: 'Te asignaste el ticket.' });
+    try {
+      const updated = await this.tickets.update(ticket.id, { assignedTo: me }, me);
+      if (updated) this.selectedTicket.set(updated);
+      this.msg.add({ severity: 'success', summary: 'Asignación', detail: 'Te asignaste el ticket.' });
+    } catch { /* silencioso */ }
   }
 
-  moveNext(ticket: Ticket) {
+  async moveNext(ticket: Ticket) {
     if (!this.canEditTicket(ticket)) return;
     const order: TicketStatus[] = ['pending', 'in_progress', 'review', 'done'];
     const idx = order.indexOf(ticket.status as TicketStatus);
-    if (idx >= 0 && idx < order.length - 1) this.changeStatus(ticket, order[idx + 1]);
+    if (idx >= 0 && idx < order.length - 1) await this.changeStatus(ticket, order[idx + 1]);
   }
 
   dragStart(ticket: Ticket) {
@@ -122,10 +141,10 @@ export class Dashboard {
 
   allowDrop(event: DragEvent) { event.preventDefault(); }
 
-  drop(status: TicketStatus) {
+  async drop(status: TicketStatus) {
     const ticket = this.dragged();
     if (!ticket) return;
-    this.changeStatus(ticket, status);
+    await this.changeStatus(ticket, status);
     this.dragged.set(null);
   }
 
@@ -160,11 +179,16 @@ export class Dashboard {
     return this.tickets.listByGroup(g.id).filter(t => t.assignedTo === me).slice(0, 5);
   });
 
-  globalStats = [
-    { label: 'Grupos activos', value: 4, icon: 'pi pi-users', color: '#3b82f6' },
-    { label: 'Usuarios totales', value: 3, icon: 'pi pi-user', color: '#22c55e' },
-    { label: 'Tickets hoy', value: 0, icon: 'pi pi-ticket', color: '#f59e0b' }
-  ];
+  readonly globalStats = computed(() => {
+    const today = new Date().toDateString();
+    const allTickets = this.groups.list().flatMap(g => this.tickets.listByGroup(g.id));
+    const ticketsHoy = allTickets.filter(t => new Date(t.createdAt).toDateString() === today).length;
+    return [
+      { label: 'Grupos activos', value: this.groups.list().length, icon: 'pi pi-users', color: '#3b82f6' },
+      { label: 'Usuarios totales', value: 0, icon: 'pi pi-user', color: '#22c55e' },
+      { label: 'Tickets hoy', value: ticketsHoy, icon: 'pi pi-ticket', color: '#f59e0b' }
+    ];
+  });
 
   quickActions = [
     { label: 'Crear ticket', icon: 'pi pi-plus', action: () => this.goCreate() },
@@ -177,6 +201,59 @@ export class Dashboard {
     { title: 'Tickets completados', value: 0 },
     { title: 'Adopción de usuarios', value: 64 }
   ];
+
+  // ── Datos para gráficos Chart.js / PrimeNG ─────────────────
+  readonly chartStatusData = computed(() => {
+    const s = this.ticketStats();
+    if (!s) return null;
+    return {
+      labels: ['Pendiente', 'En progreso', 'Revisión', 'Completado', 'Bloqueado'],
+      datasets: [{
+        data: [s.pending, s.inProgress, s.review, s.done, s.blocked],
+        backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#22c55e', '#ef4444'],
+        hoverBackgroundColor: ['#fbbf24', '#60a5fa', '#a78bfa', '#4ade80', '#f87171'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    };
+  });
+
+  readonly chartPriorityData = computed(() => {
+    const g = this.group();
+    if (!g) return null;
+    const list = this.tickets.listByGroup(g.id);
+    const prioKeys = ['supremo', 'critico', 'alto', 'medio', 'bajo', 'muy_bajo', 'observacion'];
+    const prioLabels = ['Supremo', 'Crítico', 'Alto', 'Medio', 'Bajo', 'Muy bajo', 'Obs.'];
+    const colors = ['#7c3aed', '#ef4444', '#f97316', '#f59e0b', '#22c55e', '#3b82f6', '#64748b'];
+    return {
+      labels: prioLabels,
+      datasets: [{
+        label: 'Tickets',
+        data: prioKeys.map(p => list.filter(t => t.priority === p).length),
+        backgroundColor: colors,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    };
+  });
+
+  readonly chartStatusOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#334155', font: { size: 12 } } }
+    }
+  };
+
+  readonly chartBarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { color: '#64748b', stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+      x: { ticks: { color: '#64748b' }, grid: { display: false } }
+    }
+  };
 
   highlightValue(label: string): number {
     const s = this.ticketStats();
@@ -192,6 +269,14 @@ export class Dashboard {
       done: 'success', in_progress: 'info', pending: 'warn', blocked: 'danger', review: 'secondary'
     };
     return map[status] ?? 'secondary';
+  }
+
+  async ngOnInit() {
+    await this.groups.load();
+    const groupId = this.ctx.get();
+    if (groupId) {
+      await this.tickets.loadByGroup(groupId);
+    }
   }
 
   goSelect() { this.router.navigate(['/group-select']); }

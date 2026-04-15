@@ -1,17 +1,12 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import {
   Ticket,
   TicketComment,
-  TicketHistoryEntry,
   TicketInput,
   TicketPriority,
   TicketStatus
 } from '../../models/ticket';
-
-interface SeedGroupTickets {
-  groupId: string;
-  tickets: TicketInput[];
-}
+import { Auth } from './auth';
 
 const PRIORITY_ORDER: TicketPriority[] = [
   'supremo',
@@ -23,113 +18,132 @@ const PRIORITY_ORDER: TicketPriority[] = [
   'observacion'
 ];
 
-const LEGACY_PRIORITY_MAP: Record<string, TicketPriority> = {
-  至尊: 'supremo',
-  '紧急': 'critico',
-  '高': 'alto',
-  '中': 'medio',
-  '低': 'bajo',
-  '很低': 'muy_bajo',
-  '观察': 'observacion'
-};
-
 @Injectable({ providedIn: 'root' })
 export class TicketService {
-  private readonly storeKey = 'erp-tickets';
+  private readonly apiBase = 'http://localhost:3000/api/v1/tickets';
+  private readonly auth = inject(Auth);
   private cache = signal<Ticket[]>([]);
 
-  constructor() {
-    const loaded = this.load();
-    if (!loaded.length) {
-      this.seed();
-    } else {
-      this.cache.set(loaded);
-    }
-  }
+  // ── Sync reads (from cache) ────────────────────────────────────
 
-  listByGroup(groupId: string) {
+  listByGroup(groupId: string): Ticket[] {
     return this.cache().filter(t => t.groupId === groupId);
   }
 
-  get(id: string) {
+  get(id: string): Ticket | null {
     return this.cache().find(t => t.id === id) ?? null;
   }
 
-  create(groupId: string, author: string, input: TicketInput): Ticket {
-    const now = new Date().toISOString();
-    const ticket: Ticket = {
-      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      title: input.title,
-      description: input.description,
-      status: input.status ?? 'pending',
-      priority: input.priority ?? 'medio',
-      createdAt: now,
-      dueDate: input.dueDate,
-      assignedTo: input.assignedTo,
-      groupId,
-      author,
-      comments: [],
-      history: [
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          field: 'status',
-          from: undefined,
-          to: input.status ?? 'pending',
-          at: now,
-          author
-        }
-      ]
-    };
+  // ── Async backend operations ──────────────────────────────────
 
+  async loadByGroup(groupId: string): Promise<void> {
+    const token = this.auth.getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${this.apiBase}?groupId=${encodeURIComponent(groupId)}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) return;
+      const payload = await res.json();
+      const tickets: Ticket[] = payload?.data?.tickets ?? [];
+      const other = this.cache().filter(t => t.groupId !== groupId);
+      this.cache.set([...other, ...tickets]);
+    } catch { /* silencioso */ }
+  }
+
+  async loadOne(id: string): Promise<Ticket | null> {
+    const token = this.auth.getToken();
+    if (!token) return null;
+    try {
+      const res = await fetch(`${this.apiBase}/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) return null;
+      const payload = await res.json();
+      const ticket: Ticket = payload?.data?.ticket;
+      if (ticket) {
+        const other = this.cache().filter(t => t.id !== id);
+        this.cache.set([...other, ticket]);
+      }
+      return ticket ?? null;
+    } catch { return null; }
+  }
+
+  async create(groupId: string, author: string, input: TicketInput): Promise<Ticket> {
+    const token = this.auth.getToken();
+    const res = await fetch(this.apiBase, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: input.title,
+        description: input.description,
+        status: input.status ?? 'pending',
+        priority: input.priority ?? 'medio',
+        groupId,
+        assignedTo: input.assignedTo,
+        dueDate: input.dueDate
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al crear ticket');
+    const ticket: Ticket = data?.data?.ticket;
     this.cache.set([...this.cache(), ticket]);
-    this.persist();
     return ticket;
   }
 
-  update(id: string, changes: Partial<Ticket>, actor?: string): Ticket | null {
-    const idx = this.cache().findIndex(t => t.id === id);
-    if (idx < 0) return null;
-    const current = this.cache()[idx];
-    const updated = { ...current, ...changes } as Ticket;
-    const at = new Date().toISOString();
+  async update(id: string, changes: Partial<Ticket>, _actor?: string): Promise<Ticket | null> {
+    const token = this.auth.getToken();
+    const { status, ...rest } = changes as Partial<Ticket> & { status?: TicketStatus };
+    let ticket: Ticket | null = null;
 
-    const history: TicketHistoryEntry[] = [];
-    const track = (
-      field: TicketHistoryEntry['field'],
-      fromVal?: string,
-      toVal?: string
-    ) => {
-      if (fromVal === toVal) return;
-      history.push({
-        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        field,
-        from: fromVal,
-        to: toVal,
-        at,
-        author: actor
+    if (status !== undefined) {
+      const res = await fetch(`${this.apiBase}/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
       });
-    };
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar estado');
+      ticket = data?.data?.ticket;
+    }
 
-    track('status', current.status, updated.status);
-    track('priority', current.priority, updated.priority);
-    track('assignedTo', current.assignedTo, updated.assignedTo);
-    track('dueDate', current.dueDate, updated.dueDate);
-    track('title', current.title, updated.title);
-    track('description', current.description, updated.description);
+    if (Object.keys(rest).length > 0) {
+      const res = await fetch(`${this.apiBase}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(rest)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar ticket');
+      ticket = data?.data?.ticket;
+    }
 
-    updated.history = [...(current.history ?? []), ...history];
-    const next = [...this.cache()];
-    next[idx] = updated;
-    this.cache.set(next);
-    this.persist();
-    return updated;
+    if (ticket) {
+      const other = this.cache().filter(t => t.id !== id);
+      this.cache.set([...other, ticket]);
+    }
+    return ticket;
   }
 
-  delete(id: string) {
-    const before = this.cache().length;
+  async delete(id: string): Promise<boolean> {
+    const token = this.auth.getToken();
+    const res = await fetch(`${this.apiBase}/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) return false;
     this.cache.set(this.cache().filter(t => t.id !== id));
-    this.persist();
-    return this.cache().length !== before;
+    return true;
+  }
+
+  async addComment(ticketId: string, comment: Omit<TicketComment, 'id' | 'at'>): Promise<void> {
+    const token = this.auth.getToken();
+    await fetch(`${this.apiBase}/${ticketId}/comments`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(comment)
+    });
+    await this.loadOne(ticketId);
   }
 
   statuses(): { label: string; value: TicketStatus }[] {
@@ -144,121 +158,5 @@ export class TicketService {
 
   priorities(): TicketPriority[] {
     return [...PRIORITY_ORDER];
-  }
-
-  addComment(ticketId: string, comment: Omit<TicketComment, 'id' | 'at'>) {
-    const idx = this.cache().findIndex(t => t.id === ticketId);
-    if (idx < 0) return null;
-    const now = new Date().toISOString();
-    const nextComment: TicketComment = {
-      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      at: now,
-      ...comment
-    };
-    const target = this.cache()[idx];
-    const next = { ...target, comments: [...(target.comments ?? []), nextComment] } as Ticket;
-    this.cache.set([...this.cache().slice(0, idx), next, ...this.cache().slice(idx + 1)]);
-    this.persist();
-    return nextComment;
-  }
-
-  private seed() {
-    const seeds: SeedGroupTickets[] = [
-      {
-        groupId: 'seed-ventas',
-        tickets: [
-          {
-            title: 'Onboard nueva cuenta',
-            description: 'Configurar CRM y dashboards de ventas',
-            status: 'pending',
-            priority: 'critico',
-            assignedTo: 'edgy@erp.com'
-          },
-          {
-            title: 'Demo semanal',
-            description: 'Coordinar agenda con cliente clave',
-            status: 'in_progress',
-            priority: 'medio',
-            assignedTo: 'ana@erp.com'
-          }
-        ]
-      },
-      {
-        groupId: 'seed-ti',
-        tickets: [
-          {
-            title: 'Incidente VPN',
-            description: 'Cortes aleatorios en VPN corporativa',
-            status: 'review',
-            priority: 'alto',
-            assignedTo: 'super@erp.com'
-          },
-          {
-            title: 'Actualizar agentes EDR',
-            description: 'EDR desactualizado en 30 equipos',
-            status: 'in_progress',
-            priority: 'bajo'
-          }
-        ]
-      }
-    ];
-
-    const now = new Date().toISOString();
-    const all: Ticket[] = [];
-    for (const seed of seeds) {
-      for (const t of seed.tickets) {
-        all.push({
-          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          title: t.title,
-          description: t.description,
-          status: t.status ?? 'pending',
-          priority: t.priority ?? 'medio',
-          createdAt: now,
-          dueDate: undefined,
-          assignedTo: t.assignedTo,
-          groupId: seed.groupId,
-          author: 'system',
-          comments: [],
-          history: [
-            {
-              id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-              field: 'status',
-              from: undefined,
-              to: t.status ?? 'pending',
-              at: now,
-              author: 'system'
-            }
-          ]
-        });
-      }
-    }
-    this.cache.set(all);
-    this.persist();
-  }
-
-  private load(): Ticket[] {
-    const saved = localStorage.getItem(this.storeKey);
-    if (!saved) return [];
-    try {
-      const parsed = JSON.parse(saved) as Ticket[];
-      if (!Array.isArray(parsed)) return [];
-      // Normaliza tickets antiguos sin comentarios/historial y convierte prioridades legacy
-      return parsed.map(t => {
-        const legacy = LEGACY_PRIORITY_MAP[(t as any).priority as string];
-        const priority = legacy ?? (PRIORITY_ORDER.includes(t.priority as TicketPriority) ? (t.priority as TicketPriority) : 'medio');
-        return {
-          ...t,
-          priority,
-          comments: t.comments ?? [],
-          history: t.history ?? []
-        } as Ticket;
-      });
-    } catch {
-      return [];
-    }
-  }
-
-  private persist() {
-    localStorage.setItem(this.storeKey, JSON.stringify(this.cache()));
   }
 }

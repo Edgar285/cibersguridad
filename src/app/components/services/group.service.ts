@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { Auth } from './auth';
 
 export type GroupState = 'success' | 'agree' | 'x';
 
@@ -25,72 +26,113 @@ export interface GroupInput {
   estado: GroupState;
 }
 
+export interface GroupMemberRecord {
+  userId: string;
+  permissions: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  private readonly storeKey = 'erp-groups';
-  private cache: Group[] = [];
-
-  constructor() {
-    this.cache = this.load();
-  }
+  private readonly apiBase = 'http://localhost:3000/api/v1/groups';
+  private readonly auth = inject(Auth);
+  private _groups = signal<Group[]>([]);
 
   list(): Group[] {
-    return [...this.cache];
+    return this._groups();
   }
 
   get(id: string): Group | null {
-    return this.cache.find(g => g.id === id) ?? null;
+    return this._groups().find(g => g.id === id) ?? null;
   }
 
-  create(payload: GroupInput): Group {
-    const now = new Date().toISOString();
-    const group: Group = {
-      ...payload,
-      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      createdAt: now,
-      updatedAt: now
-    };
+  async load(): Promise<void> {
+    const token = this.auth.getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(this.apiBase, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) return;
+      const payload = await res.json();
+      const groups: Group[] = payload?.data?.groups ?? [];
+      this._groups.set(groups);
+    } catch { /* silencioso */ }
+  }
 
-    this.cache = [...this.cache, group];
-    this.persist();
+  async create(payload: GroupInput): Promise<Group> {
+    const token = this.auth.getToken();
+    const res = await fetch(this.apiBase, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al crear grupo');
+    const group: Group = data?.data?.group;
+    this._groups.set([...this._groups(), group]);
     return group;
   }
 
-  update(id: string, payload: Partial<GroupInput>): Group | null {
-    const idx = this.cache.findIndex(g => g.id === id);
-    if (idx < 0) return null;
-
-    const updated: Group = {
-      ...this.cache[idx],
-      ...payload,
-      updatedAt: new Date().toISOString()
-    };
-
-    this.cache = [...this.cache.slice(0, idx), updated, ...this.cache.slice(idx + 1)];
-    this.persist();
-    return updated;
+  async update(id: string, payload: Partial<GroupInput>): Promise<Group> {
+    const token = this.auth.getToken();
+    const res = await fetch(`${this.apiBase}/${id}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar grupo');
+    const group: Group = data?.data?.group;
+    this._groups.set(this._groups().map(g => g.id === id ? group : g));
+    return group;
   }
 
-  delete(id: string): boolean {
-    const before = this.cache.length;
-    this.cache = this.cache.filter(g => g.id !== id);
-    this.persist();
-    return this.cache.length !== before;
+  async delete(id: string): Promise<boolean> {
+    const token = this.auth.getToken();
+    const res = await fetch(`${this.apiBase}/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) return false;
+    this._groups.set(this._groups().filter(g => g.id !== id));
+    return true;
   }
 
-  private load(): Group[] {
-    const saved = localStorage.getItem(this.storeKey);
-    if (!saved) return [];
-
+  async getMembers(groupId: string): Promise<GroupMemberRecord[]> {
+    const token = this.auth.getToken();
+    if (!token) return [];
     try {
-      const parsed = JSON.parse(saved) as Group[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+      const res = await fetch(`${this.apiBase}/${groupId}/members`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) return [];
+      const payload = await res.json();
+      return payload?.data?.members ?? [];
+    } catch { return []; }
   }
 
-  private persist() {
-    localStorage.setItem(this.storeKey, JSON.stringify(this.cache));
+  async setMemberPermissions(groupId: string, userId: string, permissions: string[]): Promise<boolean> {
+    const token = this.auth.getToken();
+    if (!token) return false;
+    try {
+      const res = await fetch(`${this.apiBase}/${groupId}/members/${userId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions })
+      });
+      return res.ok;
+    } catch { return false; }
+  }
+
+  async removeMember(groupId: string, userId: string): Promise<boolean> {
+    const token = this.auth.getToken();
+    if (!token) return false;
+    try {
+      const res = await fetch(`${this.apiBase}/${groupId}/members/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      return res.ok;
+    } catch { return false; }
   }
 }

@@ -135,11 +135,14 @@ async function buildGateway() {
   app.route({ method: proxyMethods, url: '/*', handler: async (request, reply) => {
     const { method, url } = request;
 
-    // Encontrar la regla que coincide
+    // Encontrar la regla que coincide (más específica primero)
     const rule = ROUTES.find(r => {
       const methodMatch = r.method === '*' || r.method === method;
-      const pathMatch = url.startsWith(r.pathPrefix);
-      return methodMatch && pathMatch;
+      if (!methodMatch) return false;
+      if (!url.startsWith(r.pathPrefix)) return false;
+      // Si la ruta tiene pathSuffix, el URL debe terminar con ese sufijo
+      if (r.pathSuffix) return url.endsWith(r.pathSuffix);
+      return true;
     });
 
     if (!rule) {

@@ -6,7 +6,20 @@ const { OP_CODES } = require('./http/op-codes');
 
 function createApp() {
   const jwtSecret = process.env.JWT_SECRET || 'changeme-secret';
-  const repo = createMemoryGroupRepository();
+
+  // Usar Supabase si las variables de entorno están presentes
+  let repo;
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  if (supabaseUrl && supabaseKey) {
+    const { createSupabaseGroupRepository } = require('./repositories/supabase-group-repository');
+    repo = createSupabaseGroupRepository({ supabaseUrl, supabaseKey });
+    console.log('[group-service] Usando repositorio Supabase');
+  } else {
+    repo = createMemoryGroupRepository();
+    console.log('[group-service] Usando repositorio en memoria (los datos no persisten)');
+  }
+
   const { requireAuth, requirePermission } = createAuthMiddleware(jwtSecret);
 
   const app = express();
@@ -26,78 +39,105 @@ function createApp() {
     return send(res, 200, OP_CODES.SUCCESS, { service: 'group-service', status: 'ok' });
   });
 
-  // ── GET /api/v1/groups — listar todos los grupos ───────────────
-  // Requiere: groups-view
-  app.get('/api/v1/groups', requireAuth, requirePermission('groups:view'), (_req, res) => {
-    return send(res, 200, OP_CODES.SUCCESS, { groups: repo.findAll() });
+  // ── GET /api/v1/groups ─────────────────────────────────────────
+  app.get('/api/v1/groups', requireAuth, requirePermission('groups:view'), async (_req, res) => {
+    try {
+      return send(res, 200, OP_CODES.SUCCESS, { groups: await repo.findAll() });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
   // ── GET /api/v1/groups/:id ─────────────────────────────────────
-  app.get('/api/v1/groups/:id', requireAuth, requirePermission('groups:view'), (req, res) => {
-    const group = repo.findById(req.params.id);
-    if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
-    return send(res, 200, OP_CODES.SUCCESS, { group });
+  app.get('/api/v1/groups/:id', requireAuth, requirePermission('groups:view'), async (req, res) => {
+    try {
+      const group = await repo.findById(req.params.id);
+      if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
+      return send(res, 200, OP_CODES.SUCCESS, { group });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
-  // ── POST /api/v1/groups — crear ────────────────────────────────
-  // Requiere: groups-add
-  app.post('/api/v1/groups', requireAuth, requirePermission('groups:add'), (req, res) => {
-    const { nombre, descripcion, nivel, actor, integrantes, tickets, estado } = req.body ?? {};
-    if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 2) {
-      return send(res, 400, OP_CODES.VALIDATION_ERROR, { message: 'El nombre del grupo es obligatorio (mínimo 2 caracteres)' });
+  // ── POST /api/v1/groups ────────────────────────────────────────
+  app.post('/api/v1/groups', requireAuth, requirePermission('groups:add'), async (req, res) => {
+    try {
+      const { nombre, descripcion, nivel, actor, integrantes, tickets, estado } = req.body ?? {};
+      if (!nombre || typeof nombre !== 'string' || nombre.trim().length < 2) {
+        return send(res, 400, OP_CODES.VALIDATION_ERROR, { message: 'El nombre del grupo es obligatorio (mínimo 2 caracteres)' });
+      }
+      const group = await repo.create({ nombre: nombre.trim(), descripcion, nivel, actor, integrantes, tickets, estado });
+      return send(res, 201, OP_CODES.SUCCESS, { group });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
     }
-    const group = repo.create({ nombre: nombre.trim(), descripcion, nivel, actor, integrantes, tickets, estado });
-    return send(res, 201, OP_CODES.SUCCESS, { group });
   });
 
-  // ── PATCH /api/v1/groups/:id — editar ─────────────────────────
-  // Requiere: groups-edit
-  app.patch('/api/v1/groups/:id', requireAuth, requirePermission('groups:edit'), (req, res) => {
-    const group = repo.findById(req.params.id);
-    if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
-    const allowed = ['nombre', 'descripcion', 'nivel', 'actor', 'integrantes', 'tickets', 'estado'];
-    const changes = {};
-    for (const key of allowed) {
-      if (req.body[key] !== undefined) changes[key] = req.body[key];
+  // ── PATCH /api/v1/groups/:id ───────────────────────────────────
+  app.patch('/api/v1/groups/:id', requireAuth, requirePermission('groups:edit'), async (req, res) => {
+    try {
+      const group = await repo.findById(req.params.id);
+      if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
+      const allowed = ['nombre', 'descripcion', 'nivel', 'actor', 'integrantes', 'tickets', 'estado'];
+      const changes = {};
+      for (const key of allowed) {
+        if (req.body[key] !== undefined) changes[key] = req.body[key];
+      }
+      const updated = await repo.update(req.params.id, changes);
+      return send(res, 200, OP_CODES.SUCCESS, { group: updated });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
     }
-    const updated = repo.update(req.params.id, changes);
-    return send(res, 200, OP_CODES.SUCCESS, { group: updated });
   });
 
   // ── DELETE /api/v1/groups/:id ──────────────────────────────────
-  // Requiere: groups-delete
-  app.delete('/api/v1/groups/:id', requireAuth, requirePermission('groups:delete'), (req, res) => {
-    const group = repo.findById(req.params.id);
-    if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
-    repo.delete(req.params.id);
-    return send(res, 200, OP_CODES.SUCCESS, { message: 'Grupo eliminado' });
+  app.delete('/api/v1/groups/:id', requireAuth, requirePermission('groups:delete'), async (req, res) => {
+    try {
+      const group = await repo.findById(req.params.id);
+      if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
+      await repo.delete(req.params.id);
+      return send(res, 200, OP_CODES.SUCCESS, { message: 'Grupo eliminado' });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
-  // ── GET /api/v1/groups/:id/members — listar miembros ──────────
-  app.get('/api/v1/groups/:id/members', requireAuth, requirePermission('groups:view'), (req, res) => {
-    const group = repo.findById(req.params.id);
-    if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
-    return send(res, 200, OP_CODES.SUCCESS, { members: repo.getMembers(req.params.id) });
+  // ── GET /api/v1/groups/:id/members ────────────────────────────
+  app.get('/api/v1/groups/:id/members', requireAuth, requirePermission('groups:view'), async (req, res) => {
+    try {
+      const group = await repo.findById(req.params.id);
+      if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
+      return send(res, 200, OP_CODES.SUCCESS, { members: await repo.getMembers(req.params.id) });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
-  // ── PUT /api/v1/groups/:id/members/:userId — asignar permisos ─
-  // Requiere: groups-edit
-  app.put('/api/v1/groups/:id/members/:userId', requireAuth, requirePermission('groups:edit'), (req, res) => {
-    const group = repo.findById(req.params.id);
-    if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
-    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];
-    repo.setMemberPermissions(req.params.id, req.params.userId, permissions);
-    return send(res, 200, OP_CODES.SUCCESS, {
-      userId: req.params.userId,
-      groupId: req.params.id,
-      permissions
-    });
+  // ── PUT /api/v1/groups/:id/members/:userId ─────────────────────
+  app.put('/api/v1/groups/:id/members/:userId', requireAuth, requirePermission('groups:edit'), async (req, res) => {
+    try {
+      const group = await repo.findById(req.params.id);
+      if (!group) return send(res, 404, OP_CODES.GROUP_NOT_FOUND, { message: 'Grupo no encontrado' });
+      const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];
+      await repo.setMemberPermissions(req.params.id, req.params.userId, permissions);
+      return send(res, 200, OP_CODES.SUCCESS, {
+        userId: req.params.userId,
+        groupId: req.params.id,
+        permissions
+      });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
   // ── DELETE /api/v1/groups/:id/members/:userId ──────────────────
-  app.delete('/api/v1/groups/:id/members/:userId', requireAuth, requirePermission('groups:edit'), (req, res) => {
-    repo.removeMember(req.params.id, req.params.userId);
-    return send(res, 200, OP_CODES.SUCCESS, { message: 'Miembro removido' });
+  app.delete('/api/v1/groups/:id/members/:userId', requireAuth, requirePermission('groups:edit'), async (req, res) => {
+    try {
+      await repo.removeMember(req.params.id, req.params.userId);
+      return send(res, 200, OP_CODES.SUCCESS, { message: 'Miembro removido' });
+    } catch (err) {
+      return send(res, 500, OP_CODES.INTERNAL_ERROR, { message: err.message });
+    }
   });
 
   // Handler global de errores

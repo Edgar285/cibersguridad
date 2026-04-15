@@ -70,7 +70,7 @@ export class TicketCreate {
     this.router.navigate(['/dashboard']);
   }
 
-  submit() {
+  async submit() {
     const groupId = this.ctx.get();
     const author = this.auth.getCurrentUser()?.email ?? 'system';
     if (!groupId) {
@@ -85,16 +85,19 @@ export class TicketCreate {
     }
 
     const value = this.form.value;
-    this.tickets.create(groupId, author, {
-      title: value.title!,
-      description: value.description!,
-      status: value.status as TicketStatus,
-      priority: value.priority as TicketPriority,
-      assignedTo: value.assignedTo || undefined,
-      dueDate: value.dueDate ? new Date(value.dueDate).toISOString() : undefined
-    });
-
-    this.msg.add({ severity: 'success', summary: 'Ticket', detail: 'Creado' });
-    setTimeout(() => this.router.navigate(['/dashboard']), 400);
+    try {
+      await this.tickets.create(groupId, author, {
+        title: value.title!,
+        description: value.description!,
+        status: value.status as TicketStatus,
+        priority: value.priority as TicketPriority,
+        assignedTo: value.assignedTo || undefined,
+        dueDate: value.dueDate ? new Date(value.dueDate).toISOString() : undefined
+      });
+      this.msg.add({ severity: 'success', summary: 'Ticket', detail: 'Creado' });
+      setTimeout(() => this.router.navigate(['/dashboard']), 400);
+    } catch (e: any) {
+      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo crear el ticket' });
+    }
   }
 }

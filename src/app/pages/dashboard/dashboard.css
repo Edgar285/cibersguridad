@@ -643,3 +643,41 @@
   font-size: 0.85rem;
   margin: 0 0 0.5rem;
 }
+
+/* ---- Charts row ---- */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.chart-card {
+  height: 100%;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.chart-card-header i {
+  color: #F54927;
+  font-size: 1rem;
+}
+
+.chart-wrap {
+  height: 260px;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}

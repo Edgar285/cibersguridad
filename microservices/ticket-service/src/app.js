@@ -10,7 +10,20 @@ const VALID_PRIORITIES = ['supremo', 'critico', 'alto', 'medio', 'bajo', 'muy_ba
 
 async function buildApp() {
   const jwtSecret = process.env.JWT_SECRET || 'changeme-secret';
-  const repo = createMemoryTicketRepository();
+
+  // Usar Supabase si las variables de entorno están presentes
+  let repo;
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  if (supabaseUrl && supabaseKey) {
+    const { createSupabaseTicketRepository } = require('./repositories/supabase-ticket-repository');
+    repo = createSupabaseTicketRepository({ supabaseUrl, supabaseKey });
+    console.log('[ticket-service] Usando repositorio Supabase');
+  } else {
+    repo = createMemoryTicketRepository();
+    console.log('[ticket-service] Usando repositorio en memoria (los datos no persisten)');
+  }
+
   const { requireAuth, requirePermission } = createAuthMiddleware(jwtSecret);
 
   const app = Fastify({ logger: false });
@@ -35,7 +48,7 @@ async function buildApp() {
     preHandler: [requireAuth, requirePermission('tickets:view')]
   }, async (request, reply) => {
     const { groupId } = request.query;
-    const tickets = groupId ? repo.findByGroup(groupId) : repo.findAll();
+    const tickets = groupId ? await repo.findByGroup(groupId) : await repo.findAll();
     return send(reply, 200, OP_CODES.SUCCESS, { tickets });
   });
 
@@ -46,7 +59,7 @@ async function buildApp() {
   app.get('/api/v1/tickets/:id', {
     preHandler: [requireAuth, requirePermission('tickets:view')]
   }, async (request, reply) => {
-    const ticket = repo.findById(request.params.id);
+    const ticket = await repo.findById(request.params.id);
     if (!ticket) {
       return send(reply, 404, OP_CODES.TICKET_NOT_FOUND, { message: 'Ticket no encontrado' });
     }
@@ -75,7 +88,7 @@ async function buildApp() {
       return send(reply, 400, OP_CODES.VALIDATION_ERROR, { message: `Prioridad inválida. Valores permitidos: ${VALID_PRIORITIES.join(', ')}` });
     }
 
-    const ticket = repo.create({
+    const ticket = await repo.create({
       title: title.trim(),
       description,
       status,
@@ -96,7 +109,7 @@ async function buildApp() {
   app.patch('/api/v1/tickets/:id', {
     preHandler: [requireAuth, requirePermission('tickets:edit')]
   }, async (request, reply) => {
-    const ticket = repo.findById(request.params.id);
+    const ticket = await repo.findById(request.params.id);
     if (!ticket) {
       return send(reply, 404, OP_CODES.TICKET_NOT_FOUND, { message: 'Ticket no encontrado' });
     }
@@ -107,7 +120,7 @@ async function buildApp() {
       if (request.body[key] !== undefined) changes[key] = request.body[key];
     }
 
-    const updated = repo.update(request.params.id, changes, request.user.sub);
+    const updated = await repo.update(request.params.id, changes, request.user.sub);
     return send(reply, 200, OP_CODES.SUCCESS, { ticket: updated });
   });
 
@@ -118,7 +131,7 @@ async function buildApp() {
   app.patch('/api/v1/tickets/:id/status', {
     preHandler: [requireAuth, requirePermission('tickets:move')]
   }, async (request, reply) => {
-    const ticket = repo.findById(request.params.id);
+    const ticket = await repo.findById(request.params.id);
     if (!ticket) {
       return send(reply, 404, OP_CODES.TICKET_NOT_FOUND, { message: 'Ticket no encontrado' });
     }
@@ -139,8 +152,30 @@ async function buildApp() {
       });
     }
 
-    const updated = repo.update(request.params.id, { status }, request.user.sub);
+    const updated = await repo.update(request.params.id, { status }, request.user.sub);
     return send(reply, 200, OP_CODES.SUCCESS, { ticket: updated });
+  });
+
+  // ──────────────────────────────────────────────────────────────
+  // POST /api/v1/tickets/:id/comments — agregar comentario
+  // Requiere: tickets:view
+  // ──────────────────────────────────────────────────────────────
+  app.post('/api/v1/tickets/:id/comments', {
+    preHandler: [requireAuth, requirePermission('tickets:view')]
+  }, async (request, reply) => {
+    const ticket = await repo.findById(request.params.id);
+    if (!ticket) {
+      return send(reply, 404, OP_CODES.TICKET_NOT_FOUND, { message: 'Ticket no encontrado' });
+    }
+    const { message } = request.body ?? {};
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return send(reply, 400, OP_CODES.VALIDATION_ERROR, { message: 'El mensaje del comentario es obligatorio' });
+    }
+    const updated = await repo.addComment(request.params.id, {
+      author: request.user.email || request.user.sub,
+      message: message.trim()
+    });
+    return send(reply, 201, OP_CODES.SUCCESS, { ticket: updated });
   });
 
   // ──────────────────────────────────────────────────────────────
@@ -150,11 +185,11 @@ async function buildApp() {
   app.delete('/api/v1/tickets/:id', {
     preHandler: [requireAuth, requirePermission('tickets:delete')]
   }, async (request, reply) => {
-    const ticket = repo.findById(request.params.id);
+    const ticket = await repo.findById(request.params.id);
     if (!ticket) {
       return send(reply, 404, OP_CODES.TICKET_NOT_FOUND, { message: 'Ticket no encontrado' });
     }
-    repo.delete(request.params.id);
+    await repo.delete(request.params.id);
     return send(reply, 200, OP_CODES.SUCCESS, { message: 'Ticket eliminado' });
   });
 

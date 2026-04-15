@@ -10,6 +10,27 @@
   min-height: 76px;
 }
 
+/* ── Botón cerrar sesión ── */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.logout-btn:hover {
+  background: rgba(239,68,68,0.75);
+  border-color: rgba(239,68,68,0.9);
+}
+
 :host ::ng-deep .app-menubar .p-menubar-root-list,
 :host ::ng-deep .app-menubar .p-menubar-root-list > .p-menuitem {
   color: #eaf6ff !important;

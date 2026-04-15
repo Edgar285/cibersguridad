@@ -39,7 +39,7 @@
 
     <!-- ===== STATS GLOBALES ===== -->
     <div class="global-stats">
-      <div class="global-stat-card" *ngFor="let s of globalStats">
+      <div class="global-stat-card" *ngFor="let s of globalStats()">
         <div class="gsc-icon" [style.background]="s.color + '18'" [style.color]="s.color">
           <i [class]="s.icon"></i>
         </div>
@@ -82,6 +82,43 @@
           <p class="ts-num">{{ s.blocked }}</p>
           <p class="ts-lbl">Bloqueados</p>
         </div>
+      </div>
+
+      <!-- ===== GRÁFICOS ===== -->
+      <div class="charts-row" *ngIf="ticketStats() && ticketStats()!.total > 0">
+        <p-card class="chart-card">
+          <ng-template pTemplate="header">
+            <div class="chart-card-header">
+              <i class="pi pi-chart-pie"></i>
+              <span>Tickets por estado</span>
+            </div>
+          </ng-template>
+          <div class="chart-wrap">
+            <p-chart
+              type="doughnut"
+              [data]="chartStatusData()"
+              [options]="chartStatusOptions"
+              height="260px">
+            </p-chart>
+          </div>
+        </p-card>
+
+        <p-card class="chart-card">
+          <ng-template pTemplate="header">
+            <div class="chart-card-header">
+              <i class="pi pi-chart-bar"></i>
+              <span>Tickets por prioridad</span>
+            </div>
+          </ng-template>
+          <div class="chart-wrap">
+            <p-chart
+              type="bar"
+              [data]="chartPriorityData()"
+              [options]="chartBarOptions"
+              height="260px">
+            </p-chart>
+          </div>
+        </p-card>
       </div>
 
       <!-- Fila media: acciones rápidas + progreso -->

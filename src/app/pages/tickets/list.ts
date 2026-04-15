@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -21,7 +21,7 @@ import { Permission } from '../../models/permissions';
   templateUrl: './list.html',
   styleUrl: './list.css'
 })
-export class TicketList {
+export class TicketList implements OnInit {
   private ctx = inject(GroupContextService);
   private ticketsSvc = inject(TicketService);
   private router = inject(Router);
@@ -30,6 +30,7 @@ export class TicketList {
   statusFilter = signal<TicketStatus | null>(null);
   priorityFilter = signal<TicketPriority | null>(null);
   quickFilter = signal<string | null>(null);
+  loading = signal(false);
 
   private get me(): string | undefined {
     return this.auth.getCurrentUser()?.email;
@@ -44,7 +45,6 @@ export class TicketList {
     if (!id) return [] as Ticket[];
     let list = this.ticketsSvc.listByGroup(id);
 
-    // Usuario normal: solo ve sus propios tickets
     if (!this.isPrivileged) {
       list = list.filter(t => t.assignedTo === this.me);
     } else {
@@ -67,6 +67,15 @@ export class TicketList {
 
   statuses = this.ticketsSvc.statuses();
   priorities = this.ticketsSvc.priorities();
+
+  async ngOnInit() {
+    const groupId = this.ctx.get();
+    if (groupId) {
+      this.loading.set(true);
+      await this.ticketsSvc.loadByGroup(groupId);
+      this.loading.set(false);
+    }
+  }
 
   open(ticket: Ticket) {
     this.router.navigate(['/tickets', ticket.id]);

@@ -15,7 +15,6 @@ import { MessageService } from 'primeng/api';
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { Auth } from '../../components/services/auth';
 import { GroupService, Group } from '../../components/services/group.service';
-import { PermissionService } from '../../components/services/permission.service';
 import { DEFAULT_USER_PERMISSIONS, Permission, PERMISSIONS_BY_CATEGORY } from '../../models/permissions';
 
 @Component({
@@ -44,7 +43,6 @@ export class UserAdmin implements OnInit {
   private auth    = inject(Auth);
   private msg     = inject(MessageService);
   private groups  = inject(GroupService);
-  private permSvc = inject(PermissionService);
 
   users: any[] = [];
   selectedUser: any = null;
@@ -99,13 +97,12 @@ export class UserAdmin implements OnInit {
     this.groupPermsMap.set(map);
   }
 
-  saveGroupPerms() {
+  async saveGroupPerms() {
     const g = this.selectedGroupForPerms;
     const u = this.selectedUser;
     if (!g || !u) return;
     const perms = [...(this.groupPermsMap().get(g.id) ?? [])];
-    this.permSvc.setGroupPermissionsForUser(g.id, u.id, perms)
-      .catch(() => { /* silencioso */ });
+    await this.groups.setMemberPermissions(g.id, u.id, perms);
     this.msg.add({ severity: 'success', summary: 'Permisos por grupo', detail: `Permisos de ${u.username} en "${g.nombre}" actualizados.` });
   }
 
@@ -119,8 +116,9 @@ export class UserAdmin implements OnInit {
 
   canSave() { return this.selectedUser ? this.canUpdate() : this.canCreate(); }
 
-  ngOnInit() {
-    void this.refresh();
+  async ngOnInit() {
+    await this.refresh();
+    await this.groups.load();
     this.allGroups = this.groups.list();
   }
 
