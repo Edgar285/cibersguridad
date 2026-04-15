@@ -65,19 +65,19 @@ const DEMO_GROUPS = [
 ];
 
 // ─── tickets demo (1 por usuario por grupo) ───────────────────────────────────
-// Se generan dinámicamente con los IDs de usuarios y grupos creados.
+// assignedTo usa EMAIL (no UUID) ya que el frontend compara ticket.assignedTo === currentUser.email
 function buildTickets(groups, users) {
   const [g1, g2] = groups;
   const [ana, carlos, maria] = users;
   return [
     // Grupo 1 — Desarrollo Frontend
-    { groupId: g1.id, assignedTo: ana.id,    author: ana.email,    title: 'Implementar diseño responsivo',          description: 'Adaptar todas las vistas para dispositivos móviles.', priority: 'alto',   status: 'in_progress' },
-    { groupId: g1.id, assignedTo: carlos.id, author: carlos.email, title: 'Corregir bug en formulario de login',    description: 'El formulario no valida el campo email correctamente.', priority: 'critico', status: 'pending'     },
-    { groupId: g1.id, assignedTo: maria.id,  author: maria.email,  title: 'Revisar documentación de la API',        description: 'Actualizar Swagger con los nuevos endpoints agregados.', priority: 'medio',  status: 'review'      },
+    { groupId: g1.id, assignedTo: ana.email,    author: ana.email,    title: 'Implementar diseño responsivo',        description: 'Adaptar todas las vistas para dispositivos móviles.', priority: 'alto',   status: 'in_progress' },
+    { groupId: g1.id, assignedTo: carlos.email, author: carlos.email, title: 'Corregir bug en formulario de login',  description: 'El formulario no valida el campo email correctamente.', priority: 'critico', status: 'pending'     },
+    { groupId: g1.id, assignedTo: maria.email,  author: maria.email,  title: 'Revisar documentación de la API',      description: 'Actualizar Swagger con los nuevos endpoints agregados.', priority: 'medio',  status: 'review'      },
     // Grupo 2 — Soporte Técnico
-    { groupId: g2.id, assignedTo: ana.id,    author: ana.email,    title: 'Supervisar incidencias del servidor',    description: 'Monitoreo de métricas y alertas durante el fin de semana.', priority: 'alto',   status: 'pending' },
-    { groupId: g2.id, assignedTo: carlos.id, author: carlos.email, title: 'Atender solicitud de usuario #1042',     description: 'El usuario reporta que no puede restablecer su contraseña.', priority: 'alto',   status: 'in_progress' },
-    { groupId: g2.id, assignedTo: maria.id,  author: maria.email,  title: 'Registrar reporte de errores del día',   description: 'Compilar los logs de error del día en el sistema de tickets.', priority: 'bajo',   status: 'done' }
+    { groupId: g2.id, assignedTo: ana.email,    author: ana.email,    title: 'Supervisar incidencias del servidor',  description: 'Monitoreo de métricas y alertas durante el fin de semana.', priority: 'alto',  status: 'pending'     },
+    { groupId: g2.id, assignedTo: carlos.email, author: carlos.email, title: 'Atender solicitud de usuario #1042',   description: 'El usuario reporta que no puede restablecer su contraseña.', priority: 'alto', status: 'in_progress' },
+    { groupId: g2.id, assignedTo: maria.email,  author: maria.email,  title: 'Registrar reporte de errores del día', description: 'Compilar los logs de error del día en el sistema de tickets.', priority: 'bajo', status: 'done'        }
   ];
 }
 
