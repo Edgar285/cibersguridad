@@ -192,3 +192,79 @@ textarea.p-inputtextarea:focus {
 .p-table tbody > tr:hover {
   background: #f0f7ff;
 }
+
+/* ── Overlays / Dropdowns flotantes (Select, DatePicker, MultiSelect…) ── */
+.p-select-overlay,
+.p-datepicker-panel,
+.p-multiselect-overlay,
+.p-autocomplete-overlay,
+.p-cascadeselect-panel,
+.p-tieredmenu-overlay,
+.p-menu-overlay,
+.p-overlaypanel,
+.p-listbox,
+.p-dropdown-panel {
+  background: #ffffff !important;
+  border: 1.5px solid var(--erp-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(11,18,36,0.14) !important;
+  z-index: 9999 !important;
+  overflow: hidden;
+}
+
+/* Lista de opciones dentro del overlay */
+.p-select-list-container,
+.p-select-list,
+.p-dropdown-items,
+.p-listbox-list {
+  background: #ffffff !important;
+  padding: 0.35rem 0 !important;
+}
+
+/* Item individual */
+.p-select-option,
+.p-dropdown-item,
+.p-listbox-option {
+  padding: 0.55rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  color: #0f172a !important;
+  transition: background 0.12s !important;
+}
+
+.p-select-option:hover,
+.p-dropdown-item:hover,
+.p-listbox-option:hover {
+  background: rgba(245,73,39,0.07) !important;
+  color: #F54927 !important;
+}
+
+.p-select-option.p-selected,
+.p-dropdown-item.p-highlight,
+.p-listbox-option.p-selected {
+  background: rgba(245,73,39,0.12) !important;
+  color: #F54927 !important;
+  font-weight: 700 !important;
+}
+
+/* Header del datepicker */
+.p-datepicker-panel .p-datepicker-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid var(--erp-border) !important;
+  padding: 0.5rem !important;
+}
+
+/* Hover en días del datepicker */
+.p-datepicker-panel .p-datepicker-day-cell span:hover {
+  background: rgba(245,73,39,0.1) !important;
+  color: #F54927 !important;
+}
+.p-datepicker-panel .p-datepicker-today span {
+  background: rgba(245,73,39,0.15) !important;
+  color: #F54927 !important;
+  font-weight: 800 !important;
+}
+.p-datepicker-panel span.p-selected {
+  background: #F54927 !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+}

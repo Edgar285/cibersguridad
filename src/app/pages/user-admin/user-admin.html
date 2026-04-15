@@ -7,18 +7,22 @@
     <span>Estás en modo <strong>solo lectura</strong>. Solo el Super Admin puede crear, editar o eliminar usuarios.</span>
   </div>
 
-  <div class="page-header">
-    <div>
-      <p class="eyebrow">Super Admin</p>
-      <h1>Gestión de usuarios y permisos</h1>
-      <p class="subtitle">Administra cuentas y asigna permisos de forma clara.</p>
+  <!-- Hero -->
+  <div class="ua-hero">
+    <div class="ua-hero-left">
+      <div class="ua-hero-icon"><i class="pi pi-shield"></i></div>
+      <div>
+        <p class="ua-eyebrow">Super Admin</p>
+        <h1 class="ua-title">Gestión de usuarios y permisos</h1>
+        <p class="ua-subtitle">Administra cuentas y asigna permisos de forma clara.</p>
+      </div>
     </div>
-    <div class="header-actions">
-      <div class="chips">
+    <div class="ua-hero-actions">
+      <div class="ua-chips">
         <p-tag value="Admins" severity="info"></p-tag>
         <p-tag value="Super" severity="success"></p-tag>
       </div>
-      <button *ngIf="canCreate()" pButton type="button" label="Nuevo usuario" icon="pi pi-plus" (click)="newUser()"></button>
+      <button *ngIf="canCreate()" pButton type="button" label="Nuevo usuario" icon="pi pi-plus" class="ua-new-btn" (click)="newUser()"></button>
     </div>
   </div>
 
@@ -63,8 +67,18 @@
     [(visible)]="dialogVisible"
     [modal]="true"
     [dismissableMask]="true"
-    [style]="{ width: '540px', borderRadius: '20px' }"
-    [header]="selectedUser ? 'Editar: ' + selectedUser.username : 'Nuevo usuario'">
+    [style]="{ width: '540px' }"
+    [closable]="true"
+    [draggable]="false">
+    <ng-template pTemplate="header">
+      <div class="dlg-header">
+        <div class="dlg-header-icon"><i class="pi pi-user"></i></div>
+        <div>
+          <p class="dlg-header-eyebrow">{{ selectedUser ? 'Editar usuario' : 'Nuevo usuario' }}</p>
+          <span class="dlg-header-title">{{ selectedUser ? selectedUser.username : 'Crear cuenta' }}</span>
+        </div>
+      </div>
+    </ng-template>
 
     <!-- Campos básicos -->
     <div class="modal-fields">
@@ -112,16 +126,17 @@
     <!-- Permisos por grupo -->
     <div class="perms-section" *ngIf="allGroups.length">
       <p class="perms-title"><i class="pi pi-users"></i> Permisos por grupo</p>
-      <p style="font-size:0.83rem;color:#64748b;margin:0 0 0.75rem">Selecciona un grupo y configura los permisos específicos de este usuario en ese workspace.</p>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+      <p class="perms-subtitle">Selecciona un grupo y configura los permisos específicos de este usuario en ese workspace.</p>
+      <div class="grp-selector">
         <button
           *ngFor="let g of allGroups"
           pButton
           type="button"
           [label]="g.nombre"
-          class="p-button-sm"
-          [class.p-button-outlined]="selectedGroupForPerms?.id !== g.id"
-          (click)="selectedGroupForPerms = g"></button>
+          class="p-button-sm grp-selector-btn"
+          [class.grp-selector-btn--active]="selectedGroupForPerms?.id === g.id"
+          (click)="selectedGroupForPerms = g">
+        </button>
       </div>
       <div *ngIf="selectedGroupForPerms">
         <div class="perm-categories">
@@ -144,7 +159,7 @@
             </div>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem">
+        <div class="grp-perms-footer">
           <button pButton type="button" label="Guardar permisos de grupo" icon="pi pi-check" class="p-button-success p-button-sm" (click)="saveGroupPerms()"></button>
         </div>
       </div>

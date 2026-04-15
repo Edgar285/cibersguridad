@@ -259,9 +259,10 @@ export class Dashboard implements OnInit {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
+    layout: { padding: { bottom: 8 } },
     scales: {
       y: { beginAtZero: true, ticks: { color: '#64748b', stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
-      x: { ticks: { color: '#64748b' }, grid: { display: false } }
+      x: { ticks: { color: '#64748b', maxRotation: 0, autoSkip: false, font: { size: 11 } }, grid: { display: false } }
     }
   };
 

@@ -288,9 +288,21 @@
 :host ::ng-deep .quick-btn {
   width: 100%;
   justify-content: flex-start;
-  height: 42px;
-  border-radius: 8px;
-  font-size: 0.88rem;
+  height: 44px;
+  border-radius: 8px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  border: 2px solid #e2e8f0 !important;
+  color: #334155 !important;
+  background: #fff !important;
+  transition: all 0.18s ease !important;
+}
+:host ::ng-deep .quick-btn:hover {
+  border-color: #F54927 !important;
+  color: #F54927 !important;
+  background: rgba(245,73,39,0.05) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245,73,39,0.15) !important;
 }
 
 /* Progreso */
@@ -411,6 +423,37 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ---- Botones del hero ---- */
+:host ::ng-deep .hero-btn-outline {
+  background: rgba(255,255,255,0.12) !important;
+  border: 2px solid rgba(255,255,255,0.6) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  transition: background 0.2s, border-color 0.2s !important;
+}
+:host ::ng-deep .hero-btn-outline:hover {
+  background: rgba(255,255,255,0.25) !important;
+  border-color: #fff !important;
+}
+:host ::ng-deep .hero-btn-solid {
+  background: #fff !important;
+  color: #F54927 !important;
+  border: 2px solid #fff !important;
+  font-weight: 800 !important;
+  font-size: 0.88rem !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2) !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+:host ::ng-deep .hero-btn-solid:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
 }
 
 /* ---- Switch de vista Resumen / Kanban ---- */
@@ -671,8 +714,8 @@
 }
 
 .chart-wrap {
-  height: 260px;
-  padding: 0.5rem 0.75rem;
+  height: 300px;
+  padding: 0.5rem 0.75rem 1.5rem;
   position: relative;
 }
 

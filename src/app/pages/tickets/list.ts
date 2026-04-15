@@ -5,6 +5,7 @@ import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { GroupContextService } from '../../components/services/group-context.service';
 import { TicketService } from '../../components/services/ticket.service';
@@ -14,11 +15,12 @@ import { Router } from '@angular/router';
 import { Auth } from '../../components/services/auth';
 import { PermissionService } from '../../components/services/permission.service';
 import { Permission } from '../../models/permissions';
+import { HasPermissionDirective } from '../../components/directives/has-permission.directive';
 
 @Component({
   selector: 'app-ticket-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TableModule, SelectModule, TagModule, ButtonModule, MainLayout, QuickFilters],
+  imports: [CommonModule, FormsModule, TableModule, SelectModule, TagModule, ButtonModule, TooltipModule, MainLayout, QuickFilters, HasPermissionDirective],
   templateUrl: './list.html',
   styleUrl: './list.css'
 })
@@ -69,6 +71,15 @@ export class TicketList implements OnInit {
 
   statuses = this.ticketsSvc.statuses();
   priorities = this.ticketsSvc.priorities();
+  priorityOptions = [
+    { label: 'Supremo',  value: 'supremo' },
+    { label: 'Crítico',  value: 'critico' },
+    { label: 'Alto',     value: 'alto' },
+    { label: 'Medio',    value: 'medio' },
+    { label: 'Bajo',     value: 'bajo' },
+    { label: 'Muy bajo', value: 'muy_bajo' },
+    { label: 'Obs.',     value: 'observacion' }
+  ];
 
   async ngOnInit() {
     const groupId = this.ctx.get();
@@ -81,5 +92,42 @@ export class TicketList implements OnInit {
 
   open(ticket: Ticket) {
     this.router.navigate(['/tickets', ticket.id]);
+  }
+
+  goCreate() { this.router.navigate(['/tickets/create']); }
+
+  readonly permission = Permission;
+  readonly today = new Date().toISOString().slice(0, 10);
+
+  statusLabel(s: TicketStatus): string {
+    const map: Record<TicketStatus, string> = {
+      pending: 'Pendiente', in_progress: 'En progreso',
+      review: 'Revisión', done: 'Completado', blocked: 'Bloqueado'
+    };
+    return map[s] ?? s;
+  }
+
+  statusClass(s: TicketStatus): string {
+    const map: Record<TicketStatus, string> = {
+      pending: 'st-pending', in_progress: 'st-progress',
+      review: 'st-review', done: 'st-done', blocked: 'st-blocked'
+    };
+    return map[s] ?? '';
+  }
+
+  priorityLabel(p: TicketPriority): string {
+    const map: Record<TicketPriority, string> = {
+      supremo: 'Supremo', critico: 'Crítico', alto: 'Alto',
+      medio: 'Medio', bajo: 'Bajo', muy_bajo: 'Muy bajo', observacion: 'Obs.'
+    };
+    return map[p] ?? p;
+  }
+
+  priorityClass(p: TicketPriority): string {
+    const map: Record<TicketPriority, string> = {
+      supremo: 'pr-supremo', critico: 'pr-critico', alto: 'pr-alto',
+      medio: 'pr-medio', bajo: 'pr-bajo', muy_bajo: 'pr-muy-bajo', observacion: 'pr-obs'
+    };
+    return map[p] ?? '';
   }
 }

@@ -1,3 +1,66 @@
+/* ── Hero ────────────────────────────────────── */
+.grp-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #F54927;
+  border-radius: 12px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+.grp-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.grp-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.grp-hero-icon {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: #fff;
+  flex-shrink: 0;
+}
+.grp-eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: rgba(255,255,255,0.7);
+}
+.grp-title {
+  margin: 0 0 0.2rem;
+  font-size: 1.5rem; font-weight: 900;
+  color: #fff; letter-spacing: -0.02em;
+}
+.grp-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.82);
+}
+.grp-new-btn {
+  background: rgba(255,255,255,0.18) !important;
+  border: 1.5px solid rgba(255,255,255,0.45) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.grp-new-btn:hover {
+  background: rgba(255,255,255,0.28) !important;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -138,50 +201,269 @@
   gap: 1rem;
 }
 
-.dialog-header {
+/* ═══════════════════════════════════════════════
+   Estilos comunes de diálogos (grupos)
+   ═══════════════════════════════════════════════ */
+
+/* ── Cabecera de diálogo ── */
+.dlg-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.85rem;
 }
-
-.dialog-title {
+.dlg-header-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, #F54927, #d93e1f);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(245,73,39,0.3);
+}
+.dlg-header-eyebrow {
+  margin: 0 0 0.1rem;
+  font-size: 0.68rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #F54927;
+}
+.dlg-header-title {
   font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-.dialog-form {
+/* ── Footer de diálogo ── */
+.dlg-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+.dlg-save-btn {
+  background: #F54927 !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(245,73,39,0.3) !important;
+}
+.dlg-save-btn:hover {
+  background: #d93e1f !important;
+}
+
+/* ── Formulario de grupo ── */
+.grp-dialog-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.25rem;
 }
-
-.form-grid {
+.grp-form-section {
+  background: #f8fafc;
+  border: 1px solid var(--erp-border);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.65rem;
+}
+.grp-form-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.grp-form-section-title .pi {
+  color: #F54927;
+  font-size: 0.8rem;
+}
+.grp-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
+  gap: 0.75rem 1rem;
 }
-
-.form-item {
+.grp-form-item {
   display: flex;
   flex-direction: column;
+  gap: 0.3rem;
+}
+.grp-form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+}
+:host ::ng-deep .grp-dialog-form .p-select,
+:host ::ng-deep .grp-dialog-form .p-inputnumber-input,
+:host ::ng-deep .grp-dialog-form .p-inputtext,
+:host ::ng-deep .grp-dialog-form textarea {
+  width: 100% !important;
+}
+:host ::ng-deep .grp-dialog-form .p-inputnumber {
+  width: 100% !important;
+}
+
+/* ── Diálogo miembros ── */
+.members-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: #f8fafc;
+  border: 1px solid var(--erp-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.members-add-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, #F54927, #d93e1f);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.members-add-input {
+  flex: 1 !important;
+}
+.members-add-btn {
+  background: #F54927 !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 10px rgba(245,73,39,0.25) !important;
+  white-space: nowrap;
+}
+.members-add-btn:hover {
+  background: #d93e1f !important;
+}
+.mem-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.mem-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F54927, #e03e1a);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.mem-email {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+.mem-perms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.mem-perm-badge {
+  background: #eff6ff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: #2563eb;
+  font-weight: 600;
+  font-family: monospace;
+}
+.mem-no-perms {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+.mem-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 1.5rem;
+}
+/* Editar permisos de miembro */
+.mem-edit-perms {
+  margin-top: 1.25rem;
+  border-top: 2px dashed var(--erp-border);
+  padding-top: 1rem;
+}
+.mem-edit-perms-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0f172a;
+  margin-bottom: 0.85rem;
+}
+.mem-edit-perms-title .pi {
+  color: #F54927;
+}
+.mem-perm-cat {
+  margin-bottom: 0.85rem;
+}
+.mem-perm-cat-label {
+  font-size: 0.73rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0 0 0.45rem;
+  display: flex;
+  align-items: center;
   gap: 0.35rem;
 }
-
-.form-item label {
-  font-weight: 600;
-  color: #111827;
+.mem-perm-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
-
-.dialog-footer {
+.mem-perm-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mem-perm-check--on {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.mem-perm-check input {
+  cursor: pointer;
+}
+.mem-edit-perms-footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.mem-save-btn {
+  background: #22c55e !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 3px 10px rgba(34,197,94,0.25) !important;
+}
+.mem-save-btn:hover {
+  background: #16a34a !important;
 }
 
+/* Legacy classes still referenced */
+.dialog-header { display: flex; align-items: center; gap: 0.5rem; }
+.dialog-title { font-weight: 700; font-size: 1rem; }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 0.75rem; }
+.form-item { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-item label { font-weight: 600; color: #111827; }
+.dialog-form { display: flex; flex-direction: column; gap: 0.75rem; }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-  }
+  .page-header { flex-direction: column; }
 }

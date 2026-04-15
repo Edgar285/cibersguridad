@@ -3,20 +3,25 @@
   <p-confirmDialog></p-confirmDialog>
 
   <div class="page-wrapper">
-    <div class="page-header">
-    <div>
-      <p class="eyebrow">Grupos</p>
-      <h1>Gestión de grupos</h1>
-      <p class="subtitle">CRUD completo con estados Success / Agree / X.</p>
-    </div>
-    <button
-      *appHasPermission="[permission.GroupsAdd, permission.GroupAdd]; appHasPermissionMode: 'any'"
-      pButton
-      type="button"
-      label="Nuevo grupo"
-      icon="pi pi-plus"
-      class="p-button-success"
-      (click)="openCreate()"></button>
+    <!-- Hero -->
+    <div class="grp-hero">
+      <div class="grp-hero-left">
+        <div class="grp-hero-icon"><i class="pi pi-users"></i></div>
+        <div>
+          <p class="grp-eyebrow">Configuración</p>
+          <h1 class="grp-title">Gestión de grupos</h1>
+          <p class="grp-subtitle">Crea, edita y administra los grupos del sistema.</p>
+        </div>
+      </div>
+      <button
+        *appHasPermission="[permission.GroupsAdd, permission.GroupAdd]; appHasPermissionMode: 'any'"
+        pButton
+        type="button"
+        label="Nuevo grupo"
+        icon="pi pi-plus"
+        class="grp-new-btn"
+        (click)="openCreate()">
+      </button>
     </div>
 
     <div class="stats-grid">
@@ -91,14 +96,23 @@
   <p-dialog
     [(visible)]="membersDialogVisible"
     [modal]="true"
-    [style]="{ width: '680px' }"
-    [header]="'Miembros: ' + (selectedGroupForMembers()?.nombre ?? '')"
+    [style]="{ width: '700px' }"
     [draggable]="false">
+    <ng-template pTemplate="header">
+      <div class="dlg-header">
+        <div class="dlg-header-icon"><i class="pi pi-users"></i></div>
+        <div>
+          <p class="dlg-header-eyebrow">Gestión de miembros</p>
+          <span class="dlg-header-title">{{ selectedGroupForMembers()?.nombre }}</span>
+        </div>
+      </div>
+    </ng-template>
 
     <!-- Agregar nuevo miembro -->
-    <div *appHasPermission="permission.GroupsEdit" style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center">
-      <input pInputText [(ngModel)]="newMemberEmail" placeholder="usuario@correo.com" style="flex:1" />
-      <button pButton type="button" label="Agregar" icon="pi pi-user-plus" class="p-button-success p-button-sm" (click)="addMember()"></button>
+    <div *appHasPermission="permission.GroupsEdit" class="members-add-row">
+      <div class="members-add-icon"><i class="pi pi-user-plus"></i></div>
+      <input pInputText [(ngModel)]="newMemberEmail" placeholder="usuario@correo.com" class="members-add-input" />
+      <button pButton type="button" label="Agregar" icon="pi pi-plus" class="members-add-btn" (click)="addMember()"></button>
     </div>
 
     <!-- Tabla de miembros -->
@@ -113,12 +127,15 @@
       </ng-template>
       <ng-template pTemplate="body" let-m>
         <tr>
-          <td>{{ m.username }}</td>
-          <td>{{ m.email }}</td>
+          <td class="mem-user-cell">
+            <div class="mem-avatar">{{ m.username.charAt(0).toUpperCase() }}</div>
+            <span>{{ m.username }}</span>
+          </td>
+          <td class="mem-email">{{ m.email }}</td>
           <td>
-            <div style="display:flex;flex-wrap:wrap;gap:4px">
-              <span *ngFor="let p of m.permissions" style="background:#f0f4ff;border-radius:6px;padding:2px 8px;font-size:0.78rem;color:#3b5bdb">{{ p }}</span>
-              <span *ngIf="!m.permissions?.length" style="color:#94a3b8;font-size:0.82rem">Sin permisos</span>
+            <div class="mem-perms">
+              <span *ngFor="let p of m.permissions" class="mem-perm-badge">{{ p }}</span>
+              <span *ngIf="!m.permissions?.length" class="mem-no-perms">Sin permisos</span>
             </div>
           </td>
           <td>
@@ -128,27 +145,30 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:1.5rem">Sin miembros en este grupo</td></tr>
+        <tr><td colspan="4" class="mem-empty">Sin miembros en este grupo</td></tr>
       </ng-template>
     </p-table>
 
     <!-- Editar permisos del miembro seleccionado -->
-    <div *ngIf="editingMember()" style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem">
-      <p style="font-weight:700;margin-bottom:0.75rem"><i class="pi pi-shield" style="margin-right:6px"></i>Permisos de <strong>{{ editingMember()!.email }}</strong> en este grupo</p>
-      <div *ngFor="let cat of permsByCategory" style="margin-bottom:1rem">
-        <p style="font-size:0.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">
-          <i [class]="cat.icon" style="margin-right:4px"></i>{{ cat.label }}
-        </p>
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
-          <label *ngFor="let p of cat.perms" style="display:flex;align-items:center;gap:6px;background:#f8fafc;border-radius:8px;padding:5px 10px;cursor:pointer;border:1px solid #e2e8f0" [style.background]="hasMemberPerm(p) ? '#eff6ff' : '#f8fafc'" [style.borderColor]="hasMemberPerm(p) ? '#3b82f6' : '#e2e8f0'">
-            <input type="checkbox" [checked]="hasMemberPerm(p)" (change)="toggleMemberPerm(p)" style="cursor:pointer" />
-            <span style="font-size:0.82rem">{{ p }}</span>
+    <div *ngIf="editingMember()" class="mem-edit-perms">
+      <div class="mem-edit-perms-title">
+        <i class="pi pi-shield"></i>
+        <span>Permisos de <strong>{{ editingMember()!.email }}</strong> en este grupo</span>
+      </div>
+      <div *ngFor="let cat of permsByCategory" class="mem-perm-cat">
+        <p class="mem-perm-cat-label"><i [class]="cat.icon"></i> {{ cat.label }}</p>
+        <div class="mem-perm-checks">
+          <label *ngFor="let p of cat.perms"
+            class="mem-perm-check"
+            [class.mem-perm-check--on]="hasMemberPerm(p)">
+            <input type="checkbox" [checked]="hasMemberPerm(p)" (change)="toggleMemberPerm(p)" />
+            <span>{{ p }}</span>
           </label>
         </div>
       </div>
-      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem">
+      <div class="mem-edit-perms-footer">
         <button pButton type="button" label="Cancelar" class="p-button-text p-button-sm" (click)="editingMember.set(null)"></button>
-        <button pButton type="button" label="Guardar permisos" icon="pi pi-check" class="p-button-success p-button-sm" (click)="saveMemberPerms()"></button>
+        <button pButton type="button" label="Guardar permisos" icon="pi pi-check" class="mem-save-btn" (click)="saveMemberPerms()"></button>
       </div>
     </div>
 
@@ -160,54 +180,70 @@
   <p-dialog
     [(visible)]="dialogVisible"
     [modal]="true"
-    [style]="{ width: '540px' }"
+    [style]="{ width: '560px' }"
     styleClass="group-dialog"
     [closable]="false"
     [draggable]="false">
     <ng-template pTemplate="header">
-      <div class="dialog-header">
-        <span class="dialog-title">{{ editingId ? 'Editar grupo' : 'Nuevo grupo' }}</span>
+      <div class="dlg-header">
+        <div class="dlg-header-icon"><i class="pi pi-users"></i></div>
+        <div>
+          <p class="dlg-header-eyebrow">{{ editingId ? 'Editar' : 'Nuevo' }}</p>
+          <span class="dlg-header-title">{{ editingId ? 'Editar grupo' : 'Crear nuevo grupo' }}</span>
+        </div>
       </div>
     </ng-template>
 
-    <form [formGroup]="form" class="dialog-form" (ngSubmit)="save()">
-      <div class="form-grid">
-        <div class="form-item">
-          <label>Nombre</label>
-          <input pInputText formControlName="nombre" />
-        </div>
-        <div class="form-item">
-          <label>Actor</label>
-          <input pInputText formControlName="actor" />
-        </div>
-        <div class="form-item">
-          <label>Nivel</label>
-          <input pInputText formControlName="nivel" />
-        </div>
-        <div class="form-item">
-          <label>Integrantes</label>
-          <p-inputNumber formControlName="integrantes" [min]="1" inputId="integrantes"></p-inputNumber>
-        </div>
-        <div class="form-item">
-          <label>Tickets</label>
-          <p-inputNumber formControlName="tickets" [min]="0" inputId="tickets"></p-inputNumber>
-        </div>
-        <div class="form-item">
-          <label>Estado</label>
-          <p-select formControlName="estado" [options]="stateOptions" optionLabel="label" optionValue="value"></p-select>
+    <form [formGroup]="form" class="grp-dialog-form" (ngSubmit)="save()">
+      <!-- Sección: Info básica -->
+      <div class="grp-form-section">
+        <p class="grp-form-section-title"><i class="pi pi-info-circle"></i> Información básica</p>
+        <div class="grp-form-grid">
+          <div class="grp-form-item">
+            <label class="grp-form-label">Nombre</label>
+            <input pInputText formControlName="nombre" placeholder="Ej. Soporte Técnico" />
+          </div>
+          <div class="grp-form-item">
+            <label class="grp-form-label">Actor</label>
+            <input pInputText formControlName="actor" placeholder="Ej. IT" />
+          </div>
+          <div class="grp-form-item">
+            <label class="grp-form-label">Nivel</label>
+            <input pInputText formControlName="nivel" placeholder="Ej. Alto" />
+          </div>
+          <div class="grp-form-item">
+            <label class="grp-form-label">Estado</label>
+            <p-select formControlName="estado" [options]="stateOptions" optionLabel="label" optionValue="value" placeholder="Selecciona..."></p-select>
+          </div>
         </div>
       </div>
 
-      <div class="form-item">
-        <label>Descripción</label>
-        <textarea pInputTextarea formControlName="descripcion" rows="3"></textarea>
+      <!-- Sección: Stats -->
+      <div class="grp-form-section">
+        <p class="grp-form-section-title"><i class="pi pi-chart-bar"></i> Estadísticas</p>
+        <div class="grp-form-grid">
+          <div class="grp-form-item">
+            <label class="grp-form-label">Integrantes</label>
+            <p-inputNumber formControlName="integrantes" [min]="1" inputId="integrantes"></p-inputNumber>
+          </div>
+          <div class="grp-form-item">
+            <label class="grp-form-label">Tickets</label>
+            <p-inputNumber formControlName="tickets" [min]="0" inputId="tickets"></p-inputNumber>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Descripción -->
+      <div class="grp-form-section">
+        <p class="grp-form-section-title"><i class="pi pi-align-left"></i> Descripción</p>
+        <textarea pInputTextarea formControlName="descripcion" rows="3" placeholder="Descripción del grupo..."></textarea>
       </div>
     </form>
 
     <ng-template pTemplate="footer">
-      <div class="dialog-footer">
+      <div class="dlg-footer">
         <button pButton type="button" label="Cancelar" class="p-button-text" (click)="dialogVisible = false"></button>
-        <button pButton type="button" label="Guardar" icon="pi pi-save" class="p-button-success" (click)="save()"></button>
+        <button pButton type="button" label="Guardar" icon="pi pi-save" class="dlg-save-btn" (click)="save()"></button>
       </div>
     </ng-template>
   </p-dialog>

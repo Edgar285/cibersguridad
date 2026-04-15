@@ -2,16 +2,17 @@
   <p-toast></p-toast>
 
   <section class="page-shell">
-    <div class="page-header">
-      <div>
-        <p class="eyebrow">Tickets</p>
-        <h1>Crear ticket</h1>
-        <p class="subtitle">Completa la información clave para arrancar.</p>
+    <!-- Hero -->
+    <div class="tc-hero">
+      <div class="tc-hero-left">
+        <div class="tc-hero-icon"><i class="pi pi-ticket"></i></div>
+        <div>
+          <p class="tc-eyebrow">Tickets</p>
+          <h1 class="tc-title">Crear ticket</h1>
+          <p class="tc-subtitle">Completa la información clave para arrancar.</p>
+        </div>
       </div>
-      <div class="meta">
-        <span class="chip chip-success">Nuevo</span>
-        <small class="hint">Los campos con * son obligatorios.</small>
-      </div>
+      <span class="tc-hero-badge"><i class="pi pi-asterisk"></i> Campos con * son requeridos</span>
     </div>
 
     <div class="page-card">
@@ -77,14 +78,14 @@
           ></p-datepicker>
         </div>
 
-        <div class="actions">
+        <div class="tc-actions">
           <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancel()"></button>
           <button
             pButton
             type="submit"
             label="Crear ticket"
             icon="pi pi-save"
-            class="p-button-success"
+            class="tc-save-btn"
             [disabled]="form.invalid"
           ></button>
         </div>

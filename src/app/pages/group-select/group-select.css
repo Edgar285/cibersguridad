@@ -1,18 +1,159 @@
-.cards {
+/* ── Hero ─────────────────────────────────────── */
+.gs-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: #F54927;
+  border-radius: 12px;
+  padding: 2rem 2rem 1.75rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.gs-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+.gs-hero-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; color: #fff;
+  flex-shrink: 0;
+}
+.gs-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: rgba(255,255,255,0.75);
+}
+.gs-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.65rem; font-weight: 900;
+  color: #fff; letter-spacing: -0.02em;
+}
+.gs-subtitle {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Grid de cards ────────────────────────────── */
+.gs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.1rem;
 }
 
-.group-card .group-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* ── Card individual ──────────────────────────── */
+.gs-card {
+  position: relative;
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  display: flex; flex-direction: column;
+}
+.gs-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+  border-color: #F54927;
 }
 
-.group-card .stats {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #475569;
+/* Barra de color lateral */
+.gs-card-accent {
+  height: 5px;
+  width: 100%;
 }
+.gs-card-accent[data-idx="0"] { background: linear-gradient(90deg, #F54927, #ff7c5c); }
+.gs-card-accent[data-idx="1"] { background: linear-gradient(90deg, #6366f1, #a5b4fc); }
+.gs-card-accent[data-idx="2"] { background: linear-gradient(90deg, #22c55e, #86efac); }
+.gs-card-accent[data-idx="3"] { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+
+.gs-card-body {
+  padding: 1.25rem 1.25rem 0.75rem;
+  flex: 1;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+
+.gs-card-top {
+  display: flex; align-items: center; gap: 0.85rem;
+}
+
+.gs-avatar {
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.gs-avatar[data-idx="0"] { background: rgba(245,73,39,0.1);  color: #F54927; }
+.gs-avatar[data-idx="1"] { background: rgba(99,102,241,0.1); color: #6366f1; }
+.gs-avatar[data-idx="2"] { background: rgba(34,197,94,0.1);  color: #22c55e; }
+.gs-avatar[data-idx="3"] { background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+.gs-card-info {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  min-width: 0;
+}
+
+.gs-group-name {
+  margin: 0;
+  font-size: 1.05rem; font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.gs-desc {
+  margin: 0;
+  font-size: 0.85rem; color: #64748b; line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gs-stats {
+  display: flex; gap: 1rem;
+}
+.gs-stat {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-size: 0.82rem; color: #475569; font-weight: 600;
+}
+.gs-stat i { font-size: 0.8rem; color: #94a3b8; }
+
+/* Footer de la card */
+.gs-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+  font-size: 0.85rem; font-weight: 700;
+  color: #F54927;
+  transition: background 0.15s;
+}
+.gs-card:hover .gs-card-footer {
+  background: rgba(245,73,39,0.05);
+}
+.gs-card-footer i {
+  transition: transform 0.18s;
+}
+.gs-card:hover .gs-card-footer i {
+  transform: translateX(4px);
+}
+
+/* Empty state */
+.gs-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+}
+.gs-empty i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+

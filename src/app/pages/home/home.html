@@ -1,15 +1,19 @@
 <app-main-layout>
-  <section class="home-hero">
-    <div class="home-hero__text">
-      <p class="eyebrow">Bienvenido</p>
-      <h1>Panel principal</h1>
-      <p class="subtitle">Accede a grupos, usuarios y reportes desde un solo lugar.</p>
-      <div class="hero-actions">
-        <button pButton type="button" label="Ir al Dashboard" icon="pi pi-chart-line" routerLink="/dashboard"></button>
-        <button pButton type="button" label="Crear grupo" icon="pi pi-plus" class="p-button-success" routerLink="/groups"></button>
+  <!-- Hero -->
+  <div class="home-hero">
+    <div class="home-hero-left">
+      <div class="home-hero-icon"><i class="pi pi-home"></i></div>
+      <div>
+        <p class="home-eyebrow">Bienvenido</p>
+        <h1 class="home-title">Panel principal</h1>
+        <p class="home-subtitle">Accede a grupos, usuarios y reportes desde un solo lugar.</p>
       </div>
     </div>
-  </section>
+    <div class="home-hero-actions">
+      <button pButton type="button" label="Dashboard" icon="pi pi-chart-line" class="home-btn-outline" routerLink="/dashboard"></button>
+      <button pButton type="button" label="Nuevo grupo" icon="pi pi-plus" class="home-btn-solid" routerLink="/groups"></button>
+    </div>
+  </div>
 
   <div class="stats-grid">
     <p-card *ngFor="let stat of stats" class="stat-card" [header]="stat.label">

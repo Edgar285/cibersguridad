@@ -1,62 +1,117 @@
 <app-main-layout>
-  <div class="page-header">
-    <div>
-      <p class="eyebrow">Tickets</p>
-      <h1>Vista de tabla</h1>
-      <p class="subtitle">Filtra y ordena rápidamente.</p>
+  <!-- Hero -->
+  <div class="tl-hero">
+    <div class="tl-hero-left">
+      <div class="tl-hero-icon"><i class="pi pi-ticket"></i></div>
+      <div>
+        <p class="tl-eyebrow">Tickets</p>
+        <h1 class="tl-title">Lista de tickets</h1>
+        <p class="tl-subtitle">Filtra, ordena y accede a cada ticket.</p>
+      </div>
+    </div>
+    <div class="tl-hero-actions">
+      <span class="tl-count-badge">{{ tickets().length }} tickets</span>
+      <button *appHasPermission="permission.TicketAdd" pButton type="button"
+        label="Crear ticket" icon="pi pi-plus"
+        class="tl-create-btn" (click)="goCreate()"></button>
     </div>
   </div>
 
+  <!-- Filtros -->
   @if (isPrivileged) {
-  <div class="filters">
-    <p-select
-      [options]="statuses"
-      optionLabel="label"
-      optionValue="value"
-      placeholder="Estado"
-      [ngModel]="statusFilter()"
-      (ngModelChange)="statusFilter.set($event)"></p-select>
-    <p-select
-      [options]="priorities"
-      placeholder="Prioridad"
-      [ngModel]="priorityFilter()"
-      (ngModelChange)="priorityFilter.set($event)"></p-select>
+  <div class="tl-filters">
+    <div class="tl-filter-row">
+      <p-select
+        [options]="statuses" optionLabel="label" optionValue="value"
+        placeholder="🔵 Estado"
+        [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)"
+        [showClear]="true" class="tl-select">
+      </p-select>
+      <p-select
+        [options]="priorityOptions"
+        optionLabel="label" optionValue="value"
+        placeholder="⚡ Prioridad"
+        [ngModel]="priorityFilter()" (ngModelChange)="priorityFilter.set($event)"
+        [showClear]="true" class="tl-select">
+      </p-select>
+    </div>
+    <app-quick-filters
+      [filters]="[
+        { key: 'mine',       label: 'Mis tickets' },
+        { key: 'unassigned', label: 'Sin asignar' },
+        { key: 'high',       label: 'Alta prioridad' }
+      ]"
+      [active]="quickFilter()"
+      (change)="quickFilter.set($event)">
+    </app-quick-filters>
   </div>
-
-  <app-quick-filters
-    [filters]="[
-      { key: 'mine', label: 'Mis tickets' },
-      { key: 'unassigned', label: 'Sin asignar' },
-      { key: 'high', label: 'Alta prioridad' }
-    ]"
-    [active]="quickFilter()"
-    (change)="quickFilter.set($event)"></app-quick-filters>
   }
 
-  <p-table [value]="tickets()" responsiveLayout="scroll" sortMode="multiple"
-           [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
-           [showCurrentPageReport]="true" currentPageReportTemplate="{first}-{last} de {totalRecords}">
-    <ng-template pTemplate="header">
-      <tr>
-        <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-        <th pSortableColumn="title">Título <p-sortIcon field="title"></p-sortIcon></th>
-        <th pSortableColumn="status">Estado <p-sortIcon field="status"></p-sortIcon></th>
-        <th pSortableColumn="assignedTo">Asignado <p-sortIcon field="assignedTo"></p-sortIcon></th>
-        <th pSortableColumn="priority">Prioridad <p-sortIcon field="priority"></p-sortIcon></th>
-        <th pSortableColumn="dueDate">F. límite <p-sortIcon field="dueDate"></p-sortIcon></th>
-        <th pSortableColumn="createdAt">F. creación <p-sortIcon field="createdAt"></p-sortIcon></th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-row>
-      <tr (click)="open(row)" class="clickable-row">
-        <td>{{ row.id }}</td>
-        <td>{{ row.title }}</td>
-        <td><p-tag [value]="row.status"></p-tag></td>
-        <td>{{ row.assignedTo || 'Sin asignar' }}</td>
-        <td>{{ row.priority }}</td>
-        <td>{{ row.dueDate ? (row.dueDate | date: 'shortDate') : '—' }}</td>
-        <td>{{ row.createdAt | date: 'short' }}</td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <!-- Tabla -->
+  <div class="tl-table-wrap">
+    <p-table
+      [value]="tickets()"
+      responsiveLayout="scroll"
+      sortMode="multiple"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} de {totalRecords} tickets"
+      [loading]="loading()">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:3rem">#</th>
+          <th pSortableColumn="title">Título <p-sortIcon field="title"></p-sortIcon></th>
+          <th pSortableColumn="status" style="width:130px">Estado <p-sortIcon field="status"></p-sortIcon></th>
+          <th pSortableColumn="priority" style="width:120px">Prioridad <p-sortIcon field="priority"></p-sortIcon></th>
+          <th pSortableColumn="assignedTo">Asignado a <p-sortIcon field="assignedTo"></p-sortIcon></th>
+          <th pSortableColumn="dueDate" style="width:110px">F. límite <p-sortIcon field="dueDate"></p-sortIcon></th>
+          <th pSortableColumn="createdAt" style="width:130px">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+        <tr class="tl-row" (click)="open(row)">
+          <td class="tl-idx">{{ rowIndex + 1 }}</td>
+          <td>
+            <div class="tl-title-cell">
+              <span class="tl-ticket-title">{{ row.title }}</span>
+              <span *ngIf="row.description" class="tl-ticket-desc">{{ row.description }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="tl-badge" [ngClass]="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
+          </td>
+          <td>
+            <span class="tl-badge" [ngClass]="priorityClass(row.priority)">{{ priorityLabel(row.priority) }}</span>
+          </td>
+          <td>
+            <div *ngIf="row.assignedTo; else noAssignee" class="tl-assignee">
+              <span class="tl-avatar">{{ row.assignedTo[0].toUpperCase() }}</span>
+              <span class="tl-assignee-email">{{ row.assignedTo }}</span>
+            </div>
+            <ng-template #noAssignee><span class="tl-unassigned">Sin asignar</span></ng-template>
+          </td>
+          <td class="tl-date">
+            <span *ngIf="row.dueDate" [class.tl-overdue]="row.dueDate < today">
+              <i class="pi pi-calendar" style="font-size:0.75rem;margin-right:3px"></i>
+              {{ row.dueDate | date:'d MMM' }}
+            </span>
+            <span *ngIf="!row.dueDate" class="tl-none">—</span>
+          </td>
+          <td class="tl-date">{{ row.createdAt | date:'d MMM y' }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="7">
+          <div class="tl-empty">
+            <i class="pi pi-inbox"></i>
+            <p>No hay tickets para mostrar.</p>
+          </div>
+        </td></tr>
+      </ng-template>
+    </p-table>
+  </div>
 </app-main-layout>

@@ -1,11 +1,15 @@
 <app-main-layout>
   <p-toast></p-toast>
 
-  <div class="page-header">
-    <div>
-      <p class="eyebrow">Mi cuenta</p>
-      <h1>Perfil y datos</h1>
-      <p class="subtitle">Actualiza tu información personal desde aquí.</p>
+  <!-- Hero -->
+  <div class="usr-hero">
+    <div class="usr-hero-left">
+      <div class="usr-hero-icon"><i class="pi pi-user"></i></div>
+      <div>
+        <p class="usr-eyebrow">Mi cuenta</p>
+        <h1 class="usr-title">Perfil y datos</h1>
+        <p class="usr-subtitle">Actualiza tu información personal desde aquí.</p>
+      </div>
     </div>
     <button
       *appHasPermission="permission.UserDelete"
@@ -13,8 +17,9 @@
       type="button"
       label="Desactivar cuenta"
       icon="pi pi-ban"
-      class="p-button-danger p-button-outlined"
-      (click)="deactivate()"></button>
+      class="usr-deactivate-btn"
+      (click)="deactivate()">
+    </button>
   </div>
 
   <div class="profile-layout">

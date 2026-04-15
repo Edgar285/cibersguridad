@@ -1,25 +1,49 @@
 <app-main-layout>
-  <div class="page-header">
+  <!-- Hero -->
+  <div class="gs-hero">
+    <div class="gs-hero-icon"><i class="pi pi-users"></i></div>
     <div>
-      <p class="eyebrow">Acceso</p>
-      <h1>Selecciona tu grupo</h1>
-      <p class="subtitle">Elige el espacio de trabajo al que quieres entrar.</p>
+      <p class="gs-eyebrow">Espacio de trabajo</p>
+      <h1 class="gs-title">Selecciona un grupo</h1>
+      <p class="gs-subtitle">Elige el grupo al que quieres acceder para ver sus tickets y métricas.</p>
     </div>
   </div>
 
-  <div class="cards">
-    <p-card *ngFor="let g of groups" [header]="g.nombre" class="group-card">
-      <div class="group-meta">
-        <p-tag [value]="g.nivel" severity="info"></p-tag>
-        <p class="muted">{{ g.descripcion }}</p>
-        <div class="stats">
-          <span>{{ g.integrantes }} integrantes</span>
-          <span>{{ g.tickets }} tickets</span>
+  <!-- Cards -->
+  <div class="gs-grid">
+    <div class="gs-card" *ngFor="let g of groups; let i = index" (click)="select(g)">
+      <div class="gs-card-accent" [attr.data-idx]="i % 4"></div>
+      <div class="gs-card-body">
+        <div class="gs-card-top">
+          <div class="gs-avatar" [attr.data-idx]="i % 4">
+            <i class="pi pi-users"></i>
+          </div>
+          <div class="gs-card-info">
+            <h2 class="gs-group-name">{{ g.nombre }}</h2>
+            <p-tag [value]="g.nivel" severity="info" class="gs-tag"></p-tag>
+          </div>
+        </div>
+        <p class="gs-desc">{{ g.descripcion || 'Sin descripción.' }}</p>
+        <div class="gs-stats">
+          <div class="gs-stat">
+            <i class="pi pi-user"></i>
+            <span>{{ g.integrantes }} integrantes</span>
+          </div>
+          <div class="gs-stat">
+            <i class="pi pi-ticket"></i>
+            <span>{{ g.tickets }} tickets</span>
+          </div>
         </div>
       </div>
-      <ng-template pTemplate="footer">
-        <button pButton type="button" label="Entrar" icon="pi pi-sign-in" (click)="select(g)"></button>
-      </ng-template>
-    </p-card>
+      <div class="gs-card-footer">
+        <span class="gs-enter-label">Entrar al grupo</span>
+        <i class="pi pi-arrow-right"></i>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="groups.length === 0" class="gs-empty">
+    <i class="pi pi-inbox"></i>
+    <p>No tienes grupos asignados aún.</p>
   </div>
 </app-main-layout>
