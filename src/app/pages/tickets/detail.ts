@@ -16,6 +16,7 @@ import { TicketService } from '../../components/services/ticket.service';
 import { Ticket, TicketPriority, TicketStatus } from '../../models/ticket';
 import { Permission } from '../../models/permissions';
 import { Auth } from '../../components/services/auth';
+import { PermissionService } from '../../components/services/permission.service';
 
 @Component({
   selector: 'app-ticket-detail',
@@ -43,6 +44,7 @@ export class TicketDetail implements OnInit {
   private tickets = inject(TicketService);
   private msg = inject(MessageService);
   private auth = inject(Auth);
+  private permSvc = inject(PermissionService);
 
   ticket: Ticket | null = null;
   priorities: TicketPriority[] = this.tickets.priorities();
@@ -72,21 +74,22 @@ export class TicketDetail implements OnInit {
   }
 
   get isAdmin() {
-    return this.auth.hasAnyPermission([
-      Permission.TicketsEdit,
-      Permission.TicketEdit,
-      Permission.TicketDelete
-    ]);
+    return this.permSvc.hasPermission(Permission.TicketsEdit as string)
+        || this.permSvc.hasPermission(Permission.TicketEdit as string)
+        || this.permSvc.hasPermission(Permission.TicketDelete as string);
   }
 
   get canEditAll() {
     return this.isCreator || this.isAdmin;
   }
 
+  /** Puede cambiar estado solo si tiene tickets:move Y el ticket está asignado a él, o si es admin */
   get canChangeStatus() {
-    return this.canEditAll || this.isAssignee;
+    const canMove = this.permSvc.hasPermission(Permission.TicketsMove as string);
+    return this.isAdmin || (canMove && this.isAssignee);
   }
 
+  /** Puede comentar cualquier usuario autenticado con acceso al ticket */
   get canComment() {
     return !!this.actorEmail();
   }

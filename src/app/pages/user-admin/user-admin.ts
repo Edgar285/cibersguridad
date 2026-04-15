@@ -15,6 +15,7 @@ import { MessageService } from 'primeng/api';
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { Auth } from '../../components/services/auth';
 import { GroupService, Group } from '../../components/services/group.service';
+import { PermissionService } from '../../components/services/permission.service';
 import { DEFAULT_USER_PERMISSIONS, Permission, PERMISSIONS_BY_CATEGORY } from '../../models/permissions';
 
 @Component({
@@ -43,6 +44,7 @@ export class UserAdmin implements OnInit {
   private auth    = inject(Auth);
   private msg     = inject(MessageService);
   private groups  = inject(GroupService);
+  private permSvc = inject(PermissionService);
 
   users: any[] = [];
   selectedUser: any = null;
@@ -106,12 +108,12 @@ export class UserAdmin implements OnInit {
     this.msg.add({ severity: 'success', summary: 'Permisos por grupo', detail: `Permisos de ${u.username} en "${g.nombre}" actualizados.` });
   }
 
-  canCreate() { return this.auth.hasPermission(Permission.UsersAdd) || this.auth.hasPermission(Permission.UsersManage); }
-  canUpdate() { return this.auth.hasPermission(Permission.UsersEdit) || this.auth.hasPermission(Permission.UsersManage); }
-  canDelete() { return this.auth.hasPermission(Permission.UsersDelete) || this.auth.hasPermission(Permission.UsersManage); }
+  canCreate() { return this.permSvc.hasPermission(Permission.UsersAdd as string) || this.permSvc.hasPermission(Permission.UsersManage as string); }
+  canUpdate() { return this.permSvc.hasPermission(Permission.UsersEdit as string) || this.permSvc.hasPermission(Permission.UsersManage as string); }
+  canDelete() { return this.permSvc.hasPermission(Permission.UsersDelete as string) || this.permSvc.hasPermission(Permission.UsersManage as string); }
 
   get isSuperAdmin(): boolean {
-    return this.auth.hasPermissions([Permission.SuperAdmin]);
+    return this.permSvc.hasPermission(Permission.SuperAdmin as string);
   }
 
   canSave() { return this.selectedUser ? this.canUpdate() : this.canCreate(); }

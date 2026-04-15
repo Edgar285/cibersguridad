@@ -15,8 +15,8 @@
         <p class="subtitle">Detalle y cambios.</p>
       </div>
       <div class="header-actions">
-        <button pButton type="button" label="Asignarme" class="p-button-text" [disabled]="!canEditAll" (click)="assignMe()"></button>
-        <button pButton type="button" label="Eliminar" class="p-button-danger p-button-text" [disabled]="!canEditAll" (click)="delete()"></button>
+        <button *ngIf="canEditAll" pButton type="button" label="Asignarme" class="p-button-text" (click)="assignMe()"></button>
+        <button *ngIf="canEditAll" pButton type="button" label="Eliminar" class="p-button-danger p-button-text" (click)="delete()"></button>
       </div>
     </div>
 

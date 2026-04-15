@@ -12,6 +12,7 @@ import { Ticket, TicketPriority, TicketStatus } from '../../models/ticket';
 import { QuickFilters } from '../../components/filters/quick-filters';
 import { Router } from '@angular/router';
 import { Auth } from '../../components/services/auth';
+import { PermissionService } from '../../components/services/permission.service';
 import { Permission } from '../../models/permissions';
 
 @Component({
@@ -26,6 +27,7 @@ export class TicketList implements OnInit {
   private ticketsSvc = inject(TicketService);
   private router = inject(Router);
   private auth = inject(Auth);
+  private permSvc = inject(PermissionService);
 
   statusFilter = signal<TicketStatus | null>(null);
   priorityFilter = signal<TicketPriority | null>(null);
@@ -37,7 +39,7 @@ export class TicketList implements OnInit {
   }
 
   get isPrivileged(): boolean {
-    return this.auth.hasAnyPermission([Permission.TicketsEdit]);
+    return this.permSvc.hasPermission(Permission.TicketsEdit as string);
   }
 
   tickets = computed(() => {
