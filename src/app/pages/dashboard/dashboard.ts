@@ -195,15 +195,12 @@ export class Dashboard implements OnInit {
   });
 
   readonly quickActions = computed(() => {
-    const canAdd         = this.permSvc.hasPermission(Permission.TicketsAdd as string);
     const canViewGroups  = this.permSvc.hasPermission(Permission.GroupsView as string);
     const canManageUsers = this.permSvc.hasPermission(Permission.UsersView as string)
                         || this.permSvc.hasPermission(Permission.UsersManage as string);
     return [
-      ...(canAdd        ? [{ label: 'Crear ticket',          icon: 'pi pi-plus',      action: () => this.goCreate(), route: null }] : []),
-      {                    label: 'Cambiar grupo',            icon: 'pi pi-refresh',   action: () => this.goSelect(), route: null },
-      ...(canViewGroups ? [{ label: 'Ver grupos',            icon: 'pi pi-users',     action: null, route: '/groups' }] : []),
-      ...(canManageUsers? [{ label: 'Administrar usuarios',  icon: 'pi pi-user-edit', action: null, route: '/users'  }] : [])
+      ...(canViewGroups  ? [{ label: 'Ver grupos',           icon: 'pi pi-users',     action: null, route: '/groups' }] : []),
+      ...(canManageUsers ? [{ label: 'Administrar usuarios', icon: 'pi pi-user-edit', action: null, route: '/users'  }] : [])
     ];
   });
 
