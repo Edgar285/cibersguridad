@@ -126,7 +126,7 @@
         <p-card header="Acciones rápidas" class="quick-card">
           <div class="quick-grid">
             <button
-              *ngFor="let a of quickActions"
+              *ngFor="let a of quickActions()"
               pButton
               type="button"
               [label]="a.label"

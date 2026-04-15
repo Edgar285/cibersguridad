@@ -20,6 +20,7 @@ import { Ticket, TicketPriority, TicketStatus } from '../../models/ticket';
 import { Auth } from '../../components/services/auth';
 import { QuickFilters } from '../../components/filters/quick-filters';
 import { HasPermissionDirective } from '../../components/directives/has-permission.directive';
+import { PermissionService } from '../../components/services/permission.service';
 import { Permission } from '../../models/permissions';
 
 @Component({
@@ -37,6 +38,7 @@ export class Dashboard implements OnInit {
   private router = inject(Router);
   private auth = inject(Auth);
   private msg = inject(MessageService);
+  private permSvc = inject(PermissionService);
 
   protected permission = Permission;
 
@@ -54,11 +56,13 @@ export class Dashboard implements OnInit {
   }
 
   get isPrivileged(): boolean {
-    return this.auth.hasAnyPermission([Permission.TicketsEdit]);
+    return this.permSvc.hasPermission(Permission.TicketsEdit as string);
   }
 
   canEditTicket(ticket: Ticket): boolean {
-    return this.isPrivileged || ticket.assignedTo === this.me;
+    const isAdmin = this.permSvc.hasPermission(Permission.TicketsEdit as string);
+    const canMove = this.permSvc.hasPermission(Permission.TicketsMove as string);
+    return isAdmin || (canMove && ticket.assignedTo === this.me);
   }
 
   statuses = this.tickets.statuses();
@@ -190,12 +194,18 @@ export class Dashboard implements OnInit {
     ];
   });
 
-  quickActions = [
-    { label: 'Crear ticket', icon: 'pi pi-plus', action: () => this.goCreate() },
-    { label: 'Cambiar grupo', icon: 'pi pi-refresh', action: () => this.goSelect() },
-    { label: 'Ver grupos', icon: 'pi pi-users', route: '/groups' },
-    { label: 'Administrar usuarios', icon: 'pi pi-user-edit', route: '/users' }
-  ];
+  readonly quickActions = computed(() => {
+    const canAdd         = this.permSvc.hasPermission(Permission.TicketsAdd as string);
+    const canViewGroups  = this.permSvc.hasPermission(Permission.GroupsView as string);
+    const canManageUsers = this.permSvc.hasPermission(Permission.UsersView as string)
+                        || this.permSvc.hasPermission(Permission.UsersManage as string);
+    return [
+      ...(canAdd        ? [{ label: 'Crear ticket',          icon: 'pi pi-plus',      action: () => this.goCreate(), route: null }] : []),
+      {                    label: 'Cambiar grupo',            icon: 'pi pi-refresh',   action: () => this.goSelect(), route: null },
+      ...(canViewGroups ? [{ label: 'Ver grupos',            icon: 'pi pi-users',     action: null, route: '/groups' }] : []),
+      ...(canManageUsers? [{ label: 'Administrar usuarios',  icon: 'pi pi-user-edit', action: null, route: '/users'  }] : [])
+    ];
+  });
 
   highlights = [
     { title: 'Tickets completados', value: 0 },
