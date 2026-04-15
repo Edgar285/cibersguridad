@@ -56,12 +56,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'list', component: TicketList },
-      {
-        path: 'create',
-        component: TicketCreate,
-        canActivate: [authGuard],
-        data: { permissions: [Permission.TicketsAdd, Permission.TicketAdd], permissionLogic: 'any' }
-      },
+      { path: 'create', component: TicketCreate },
       { path: ':id', component: TicketDetail }
     ]
   },

@@ -13,6 +13,8 @@ import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { TicketService } from '../../components/services/ticket.service';
 import { GroupContextService } from '../../components/services/group-context.service';
 import { Auth } from '../../components/services/auth';
+import { PermissionService } from '../../components/services/permission.service';
+import { Permission } from '../../models/permissions';
 import { TicketPriority, TicketStatus } from '../../models/ticket';
 
 @Component({
@@ -40,6 +42,13 @@ export class TicketCreate {
   private msg = inject(MessageService);
   private router = inject(Router);
   private auth = inject(Auth);
+  private permSvc = inject(PermissionService);
+
+  constructor() {
+    if (!this.permSvc.hasPermission(Permission.TicketsAdd as string)) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 
   statusOptions = this.tickets.statuses();
   private priorityLabels: Record<TicketPriority, string> = {
