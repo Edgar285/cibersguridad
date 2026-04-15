@@ -12,8 +12,7 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TableModule } from 'primeng/table';
-import { DividerModule } from 'primeng/divider';
-import { RippleModule } from 'primeng/ripple';
+
 
 // App imports
 import { MainLayout } from '../../layouts/main-layout/main-layout';
@@ -37,8 +36,6 @@ import { Ticket } from '../../models/ticket';
     InputTextModule,
     ToastModule,
     TableModule,
-    DividerModule,
-    RippleModule,
     MainLayout,
     HasPermissionDirective
   ],
