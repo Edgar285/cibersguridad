@@ -69,10 +69,13 @@ export class Dashboard implements OnInit {
   priorities: TicketPriority[] = this.tickets.priorities();
 
   constructor() {
-    // Recargar tickets del backend cuando cambia el grupo activo
+    // Recargar tickets y permisos del grupo activo cuando cambia
     effect(() => {
       const id = this.ctx.get();
-      if (id) void this.tickets.loadByGroup(id);
+      if (id) {
+        void this.tickets.loadByGroup(id);
+        this.permSvc.refreshPermissionsForGroup(id);
+      }
     });
   }
 

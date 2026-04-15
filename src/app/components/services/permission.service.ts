@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Auth } from './auth';
 
 /**
@@ -21,6 +21,9 @@ export class PermissionService {
 
   /** Grupo actualmente seleccionado */
   private currentGroupId: string | null = null;
+
+  /** Se incrementa cada vez que cambian los permisos del grupo activo */
+  readonly groupPermsToken = signal(0);
 
   /**
    * Verifica si el usuario actual tiene el permiso indicado.
@@ -70,6 +73,7 @@ export class PermissionService {
         const myEntry = members.find(m => m.userId === user.id);
         if (myEntry) {
           this.groupPermissions.set(groupId, myEntry.permissions);
+          this.groupPermsToken.update(v => v + 1);
         }
       })
       .catch(() => { /* silencioso */ });

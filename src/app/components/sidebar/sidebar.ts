@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { MenuItem } from 'primeng/api';
@@ -13,13 +13,21 @@ import { Permission } from '../../models/permissions';
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css'
 })
-export class Sidebar implements OnInit {
+export class Sidebar {
   private permSvc = inject(PermissionService);
   readonly version = 'v0.0.0';
 
   items: MenuItem[] = [];
 
-  ngOnInit() {
+  constructor() {
+    // Reconstruir menú cuando cambian los permisos del grupo activo
+    effect(() => {
+      this.permSvc.groupPermsToken();
+      this.buildMenu();
+    });
+  }
+
+  private buildMenu() {
     const canManageGroups = this.permSvc.hasPermission(Permission.GroupsView) || this.permSvc.hasPermission(Permission.GroupsManage);
     const canManageUsers  = this.permSvc.hasPermission(Permission.UsersView)  || this.permSvc.hasPermission(Permission.UsersManage);
 

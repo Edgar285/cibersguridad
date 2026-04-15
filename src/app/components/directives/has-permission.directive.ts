@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, Input, TemplateRef, ViewContainerRef, effect } from '@angular/core';
 import { Permission } from '../../models/permissions';
 import { PermissionService } from '../services/permission.service';
 
@@ -14,7 +14,13 @@ export class HasPermissionDirective {
     private readonly templateRef: TemplateRef<unknown>,
     private readonly viewContainer: ViewContainerRef,
     private readonly permSvc: PermissionService
-  ) {}
+  ) {
+    // Re-evalúa cuando cambian los permisos del grupo activo
+    effect(() => {
+      this.permSvc.groupPermsToken();
+      this.updateView();
+    });
+  }
 
   @Input()
   set appHasPermission(value: Permission | Permission[]) {
