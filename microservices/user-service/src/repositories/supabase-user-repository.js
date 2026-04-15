@@ -24,7 +24,9 @@ function createSupabaseRepository(config) {
       return null;
     }
 
-    return response.json();
+    const text = await response.text();
+    if (!text || !text.trim()) return null;
+    return JSON.parse(text);
   }
 
   function encode(value) {
