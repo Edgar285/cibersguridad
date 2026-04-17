@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Auth } from './auth';
+import { ApiService } from './api.service';
 
 export type GroupState = 'success' | 'agree' | 'x';
 
@@ -33,8 +33,7 @@ export interface GroupMemberRecord {
 
 @Injectable({ providedIn: 'root' })
 export class GroupService {
-  private readonly apiBase = 'http://localhost:3000/api/v1/groups';
-  private readonly auth = inject(Auth);
+  private readonly api = inject(ApiService);
   private _groups = signal<Group[]>([]);
 
   list(): Group[] {
@@ -46,93 +45,55 @@ export class GroupService {
   }
 
   async load(): Promise<void> {
-    const token = this.auth.getToken();
-    if (!token) return;
     try {
-      const res = await fetch(this.apiBase, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) return;
-      const payload = await res.json();
-      const groups: Group[] = payload?.data?.groups ?? [];
-      this._groups.set(groups);
-    } catch { /* silencioso */ }
+      const payload = await this.api.get<{ data: { groups: Group[] } }>('/groups');
+      this._groups.set(payload?.data?.groups ?? []);
+    } catch (err) {
+      console.error('[GroupService] Error al cargar grupos:', err);
+    }
   }
 
   async create(payload: GroupInput): Promise<Group> {
-    const token = this.auth.getToken();
-    const res = await fetch(this.apiBase, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al crear grupo');
+    const data = await this.api.post<{ data: { group: Group } }>('/groups', payload);
     const group: Group = data?.data?.group;
     this._groups.set([...this._groups(), group]);
     return group;
   }
 
   async update(id: string, payload: Partial<GroupInput>): Promise<Group> {
-    const token = this.auth.getToken();
-    const res = await fetch(`${this.apiBase}/${id}`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar grupo');
+    const data = await this.api.patch<{ data: { group: Group } }>(`/groups/${id}`, payload);
     const group: Group = data?.data?.group;
     this._groups.set(this._groups().map(g => g.id === id ? group : g));
     return group;
   }
 
   async delete(id: string): Promise<boolean> {
-    const token = this.auth.getToken();
-    const res = await fetch(`${this.apiBase}/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-    });
-    if (!res.ok) return false;
-    this._groups.set(this._groups().filter(g => g.id !== id));
-    return true;
+    try {
+      await this.api.delete(`/groups/${id}`);
+      this._groups.set(this._groups().filter(g => g.id !== id));
+      return true;
+    } catch { return false; }
   }
 
   async getMembers(groupId: string): Promise<GroupMemberRecord[]> {
-    const token = this.auth.getToken();
-    if (!token) return [];
     try {
-      const res = await fetch(`${this.apiBase}/${groupId}/members`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) return [];
-      const payload = await res.json();
+      const payload = await this.api.get<{ data: { members: GroupMemberRecord[] } }>(`/groups/${groupId}/members`);
       return payload?.data?.members ?? [];
     } catch { return []; }
   }
 
   async setMemberPermissions(groupId: string, userId: string, permissions: string[]): Promise<boolean> {
-    const token = this.auth.getToken();
-    if (!token) return false;
     try {
-      const res = await fetch(`${this.apiBase}/${groupId}/members/${userId}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permissions })
-      });
-      return res.ok;
+      await this.api.put(`/groups/${groupId}/members/${userId}`, { permissions });
+      return true;
     } catch { return false; }
   }
 
   async removeMember(groupId: string, userId: string): Promise<boolean> {
-    const token = this.auth.getToken();
-    if (!token) return false;
     try {
-      const res = await fetch(`${this.apiBase}/${groupId}/members/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      return res.ok;
+      await this.api.delete(`/groups/${groupId}/members/${userId}`);
+      return true;
     } catch { return false; }
   }
 }
+

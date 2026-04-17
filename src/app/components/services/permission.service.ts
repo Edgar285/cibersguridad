@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Auth } from './auth';
+import { ApiService } from './api.service';
 
 /**
  * PermissionService — servicio central de permisos.
@@ -15,6 +16,7 @@ import { Auth } from './auth';
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
   private readonly auth = inject(Auth);
+  private readonly api = inject(ApiService);
 
   /** Map<groupId, permission[]> — permisos asignados al usuario en cada grupo */
   private groupPermissions = new Map<string, string[]>();
@@ -56,45 +58,28 @@ export class PermissionService {
   refreshPermissionsForGroup(groupId: string): void {
     this.currentGroupId = groupId;
 
-    const token = this.auth.getToken();
-    if (!token) return;
-
-    fetch(`http://localhost:3000/api/v1/groups/${groupId}/members`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(res => res.json())
-      .then((payload: { data?: { members?: { userId: string; permissions: string[] }[] } }) => {
+    this.api.get<{ data: { members: { userId: string; permissions: string[] }[] } }>(`/groups/${groupId}/members`)
+      .then((payload) => {
         const user = this.auth.getCurrentUser();
         if (!user) return;
-        const members: { userId: string; permissions: string[] }[] = payload?.data?.members ?? [];
+        const members = payload?.data?.members ?? [];
         const myEntry = members.find(m => m.userId === user.id);
-        if (myEntry) {
-          this.groupPermissions.set(groupId, myEntry.permissions);
-          this.groupPermsToken.update(v => v + 1);
-        }
+        this.groupPermissions.set(groupId, myEntry?.permissions ?? []);
+        this.groupPermsToken.update(v => v + 1);
       })
-      .catch(() => { /* silencioso */ });
+      .catch(() => {
+        this.groupPermissions.delete(groupId);
+        this.groupPermsToken.update(v => v + 1);
+        console.warn('[PermissionService] No se pudieron cargar permisos del grupo:', groupId);
+      });
   }
 
   /**
    * Establece los permisos de un usuario en un grupo.
    */
   setGroupPermissionsForUser(groupId: string, userId: string, permissions: string[]): Promise<boolean> {
-    const token = this.auth.getToken();
-    if (!token) return Promise.resolve(false);
-
-    return fetch(`http://localhost:3000/api/v1/groups/${groupId}/members/${userId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ permissions })
-    })
-      .then(res => res.ok)
+    return this.api.put(`/groups/${groupId}/members/${userId}`, { permissions })
+      .then(() => true)
       .catch(() => false);
   }
 

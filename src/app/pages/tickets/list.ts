@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { MainLayout } from '../../layouts/main-layout/main-layout';
 import { GroupContextService } from '../../components/services/group-context.service';
+import { GroupService } from '../../components/services/group.service';
 import { TicketService } from '../../components/services/ticket.service';
 import { Ticket, TicketPriority, TicketStatus } from '../../models/ticket';
 import { QuickFilters } from '../../components/filters/quick-filters';
@@ -27,6 +28,7 @@ import { HasPermissionDirective } from '../../components/directives/has-permissi
 export class TicketList implements OnInit {
   private ctx = inject(GroupContextService);
   private ticketsSvc = inject(TicketService);
+  private groupSvc = inject(GroupService);
   private router = inject(Router);
   private auth = inject(Auth);
   private permSvc = inject(PermissionService);
@@ -129,5 +131,9 @@ export class TicketList implements OnInit {
       medio: 'pr-medio', bajo: 'pr-bajo', muy_bajo: 'pr-muy-bajo', observacion: 'pr-obs'
     };
     return map[p] ?? '';
+  }
+
+  groupName(groupId: string): string {
+    return this.groupSvc.get(groupId)?.nombre ?? groupId;
   }
 }

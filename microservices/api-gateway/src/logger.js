@@ -145,22 +145,22 @@ async function getMetrics() {
   try {
     // Total de requests
     const totalR = await fetch(
-      `${SUPABASE_URL}/rest/v1/request_logs?select=id`,
+      `${url}/rest/v1/request_logs?select=id`,
       { headers: { ...headers, Prefer: 'count=exact', 'Range-Unit': 'items', Range: '0-0' } }
     );
     const total = parseInt(totalR.headers.get('content-range')?.split('/')[1] || '0', 10);
 
     // Requests por endpoint (top 10 más usados)
     const byEndpointR = await fetch(
-      `${SUPABASE_URL}/rest/v1/request_logs?select=endpoint,method&limit=1000&order=created_at.desc`,
+      `${url}/rest/v1/request_logs?select=endpoint,method&limit=1000&order=created_at.desc`,
       { headers }
     );
     const rows = byEndpointR.ok ? await byEndpointR.json() : [];
 
     const endpointMap = {};
     for (const r of rows) {
-      const key = `${r.method} ${r.endpoint}`;
-      endpointMap[key] = (endpointMap[key] || 0) + 1;
+      const k = `${r.method} ${r.endpoint}`;
+      endpointMap[k] = (endpointMap[k] || 0) + 1;
     }
     const byEndpoint = Object.entries(endpointMap)
       .sort((a, b) => b[1] - a[1])
@@ -169,7 +169,7 @@ async function getMetrics() {
 
     // Tiempo de respuesta promedio
     const avgR = await fetch(
-      `${SUPABASE_URL}/rest/v1/request_logs?select=response_time_ms&limit=1000&order=created_at.desc`,
+      `${url}/rest/v1/request_logs?select=response_time_ms&limit=1000&order=created_at.desc`,
       { headers }
     );
     const timeRows = avgR.ok ? await avgR.json() : [];
@@ -181,14 +181,14 @@ async function getMetrics() {
     // Requests en últimas 24h
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const last24R = await fetch(
-      `${SUPABASE_URL}/rest/v1/request_logs?select=id&created_at=gte.${since}`,
+      `${url}/rest/v1/request_logs?select=id&created_at=gte.${since}`,
       { headers: { ...headers, Prefer: 'count=exact', 'Range-Unit': 'items', Range: '0-0' } }
     );
     const last24h = parseInt(last24R.headers.get('content-range')?.split('/')[1] || '0', 10);
 
     // Errores recientes
     const errorsR = await fetch(
-      `${SUPABASE_URL}/rest/v1/error_logs?select=endpoint,method,error_message,created_at&order=created_at.desc&limit=5`,
+      `${url}/rest/v1/error_logs?select=endpoint,method,error_message,created_at&order=created_at.desc&limit=5`,
       { headers }
     );
     const recentErrors = errorsR.ok ? await errorsR.json() : [];

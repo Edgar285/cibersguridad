@@ -86,7 +86,8 @@
             label="Crear ticket"
             icon="pi pi-save"
             class="tc-save-btn"
-            [disabled]="form.invalid"
+            [loading]="loading()"
+            [disabled]="form.invalid || loading()"
           ></button>
         </div>
       </form>

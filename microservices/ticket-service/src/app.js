@@ -120,6 +120,14 @@ async function buildApp() {
       if (request.body[key] !== undefined) changes[key] = request.body[key];
     }
 
+    if (changes.title !== undefined && (typeof changes.title !== 'string' || changes.title.trim().length < 3)) {
+      return send(reply, 400, OP_CODES.VALIDATION_ERROR, { message: 'El título es obligatorio (mínimo 3 caracteres)' });
+    }
+    if (changes.priority !== undefined && !VALID_PRIORITIES.includes(changes.priority)) {
+      return send(reply, 400, OP_CODES.VALIDATION_ERROR, { message: `Prioridad inválida. Valores permitidos: ${VALID_PRIORITIES.join(', ')}` });
+    }
+    if (changes.title) changes.title = changes.title.trim();
+
     const updated = await repo.update(request.params.id, changes, request.user.sub);
     return send(reply, 200, OP_CODES.SUCCESS, { ticket: updated });
   });

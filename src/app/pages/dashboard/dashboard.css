@@ -698,6 +698,10 @@
   height: 100%;
 }
 
+.chart-card-full {
+  flex: 1 1 100%;
+}
+
 .chart-card-header {
   display: flex;
   align-items: center;

@@ -6,7 +6,7 @@ import {
   TicketPriority,
   TicketStatus
 } from '../../models/ticket';
-import { Auth } from './auth';
+import { ApiService } from './api.service';
 
 const PRIORITY_ORDER: TicketPriority[] = [
   'supremo',
@@ -18,16 +18,22 @@ const PRIORITY_ORDER: TicketPriority[] = [
   'observacion'
 ];
 
+type Envelope<T> = { statusCode: number; intOpCode: number; data: T };
+
 @Injectable({ providedIn: 'root' })
 export class TicketService {
-  private readonly apiBase = 'http://localhost:3000/api/v1/tickets';
-  private readonly auth = inject(Auth);
+  private readonly api = inject(ApiService);
   private cache = signal<Ticket[]>([]);
 
   // ── Sync reads (from cache) ────────────────────────────────────
 
   listByGroup(groupId: string): Ticket[] {
-    return this.cache().filter(t => t.groupId === groupId);
+    const seen = new Set<string>();
+    return this.cache().filter(t => {
+      if (t.groupId !== groupId || seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
   }
 
   get(id: string): Ticket | null {
@@ -37,29 +43,18 @@ export class TicketService {
   // ── Async backend operations ──────────────────────────────────
 
   async loadByGroup(groupId: string): Promise<void> {
-    const token = this.auth.getToken();
-    if (!token) return;
     try {
-      const res = await fetch(`${this.apiBase}?groupId=${encodeURIComponent(groupId)}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) return;
-      const payload = await res.json();
+      const payload = await this.api.get<Envelope<{ tickets: Ticket[] }>>(`/tickets?groupId=${encodeURIComponent(groupId)}`);
       const tickets: Ticket[] = payload?.data?.tickets ?? [];
+      // Reemplazar tickets del grupo en caché (evita duplicados)
       const other = this.cache().filter(t => t.groupId !== groupId);
       this.cache.set([...other, ...tickets]);
     } catch { /* silencioso */ }
   }
 
   async loadOne(id: string): Promise<Ticket | null> {
-    const token = this.auth.getToken();
-    if (!token) return null;
     try {
-      const res = await fetch(`${this.apiBase}/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) return null;
-      const payload = await res.json();
+      const payload = await this.api.get<Envelope<{ ticket: Ticket }>>(`/tickets/${id}`);
       const ticket: Ticket = payload?.data?.ticket;
       if (ticket) {
         const other = this.cache().filter(t => t.id !== id);
@@ -70,52 +65,36 @@ export class TicketService {
   }
 
   async create(groupId: string, author: string, input: TicketInput): Promise<Ticket> {
-    const token = this.auth.getToken();
-    const res = await fetch(this.apiBase, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: input.title,
-        description: input.description,
-        status: input.status ?? 'pending',
-        priority: input.priority ?? 'medio',
-        groupId,
-        assignedTo: input.assignedTo,
-        dueDate: input.dueDate
-      })
+    const payload = await this.api.post<Envelope<{ ticket: Ticket }>>('/tickets', {
+      title: input.title,
+      description: input.description,
+      status: input.status ?? 'pending',
+      priority: input.priority ?? 'medio',
+      groupId,
+      author,
+      assignedTo: input.assignedTo,
+      dueDate: input.dueDate
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.data?.message ?? 'Error al crear ticket');
-    const ticket: Ticket = data?.data?.ticket;
-    this.cache.set([...this.cache(), ticket]);
+    const ticket: Ticket = payload?.data?.ticket;
+    // Agregar a caché solo si no existe ya (evita duplicados)
+    if (ticket && !this.cache().find(t => t.id === ticket.id)) {
+      this.cache.set([...this.cache(), ticket]);
+    }
     return ticket;
   }
 
   async update(id: string, changes: Partial<Ticket>, _actor?: string): Promise<Ticket | null> {
-    const token = this.auth.getToken();
     const { status, ...rest } = changes as Partial<Ticket> & { status?: TicketStatus };
     let ticket: Ticket | null = null;
 
     if (status !== undefined) {
-      const res = await fetch(`${this.apiBase}/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar estado');
-      ticket = data?.data?.ticket;
+      const data = await this.api.patch<Envelope<{ ticket: Ticket }>>(`/tickets/${id}/status`, { status });
+      ticket = data?.data?.ticket ?? null;
     }
 
     if (Object.keys(rest).length > 0) {
-      const res = await fetch(`${this.apiBase}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(rest)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.data?.message ?? 'Error al actualizar ticket');
-      ticket = data?.data?.ticket;
+      const data = await this.api.patch<Envelope<{ ticket: Ticket }>>(`/tickets/${id}`, rest);
+      ticket = data?.data?.ticket ?? null;
     }
 
     if (ticket) {
@@ -126,23 +105,15 @@ export class TicketService {
   }
 
   async delete(id: string): Promise<boolean> {
-    const token = this.auth.getToken();
-    const res = await fetch(`${this.apiBase}/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-    });
-    if (!res.ok) return false;
-    this.cache.set(this.cache().filter(t => t.id !== id));
-    return true;
+    try {
+      await this.api.delete(`/tickets/${id}`);
+      this.cache.set(this.cache().filter(t => t.id !== id));
+      return true;
+    } catch { return false; }
   }
 
   async addComment(ticketId: string, comment: Omit<TicketComment, 'id' | 'at'>): Promise<void> {
-    const token = this.auth.getToken();
-    await fetch(`${this.apiBase}/${ticketId}/comments`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment)
-    });
+    await this.api.post(`/tickets/${ticketId}/comments`, comment);
     await this.loadOne(ticketId);
   }
 
@@ -160,3 +131,4 @@ export class TicketService {
     return [...PRIORITY_ORDER];
   }
 }
+

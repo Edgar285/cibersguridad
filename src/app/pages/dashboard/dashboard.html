@@ -121,6 +121,26 @@
         </p-card>
       </div>
 
+      <!-- Gráfico tickets por grupo (solo si hay más de 1 grupo) -->
+      <div class="charts-row" *ngIf="chartGroupData()">
+        <p-card class="chart-card chart-card-full">
+          <ng-template pTemplate="header">
+            <div class="chart-card-header">
+              <i class="pi pi-users"></i>
+              <span>Tickets por grupo</span>
+            </div>
+          </ng-template>
+          <div class="chart-wrap">
+            <p-chart
+              type="bar"
+              [data]="chartGroupData()"
+              [options]="chartBarOptions"
+              height="220px">
+            </p-chart>
+          </div>
+        </p-card>
+      </div>
+
       <!-- Fila media: acciones rápidas + progreso -->
       <div class="mid-row">
         <p-card header="Acciones rápidas" class="quick-card">

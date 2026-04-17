@@ -6,8 +6,9 @@ export class GroupContextService {
   private current = signal<string | null>(this.load());
 
   set(groupId: string) {
-    this.current.set(groupId);
-    localStorage.setItem(this.storeKey, groupId);
+    if (!groupId || typeof groupId !== 'string' || !groupId.trim()) return;
+    this.current.set(groupId.trim());
+    localStorage.setItem(this.storeKey, groupId.trim());
   }
 
   get() {

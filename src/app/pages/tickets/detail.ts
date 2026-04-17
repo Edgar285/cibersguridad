@@ -54,8 +54,16 @@ export class TicketDetail implements OnInit {
 
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
+    if (!id) {
+      this.router.navigate(['/tickets/list']);
+      return;
+    }
     this.ticket = await this.tickets.loadOne(id);
+    if (!this.ticket) {
+      this.msg.add({ severity: 'warn', summary: 'No encontrado', detail: 'El ticket no existe o no tienes acceso.', life: 3000 });
+      setTimeout(() => this.router.navigate(['/tickets/list']), 1500);
+      return;
+    }
     if (this.ticket?.dueDate) this.dueDateValue = new Date(this.ticket.dueDate);
   }
 

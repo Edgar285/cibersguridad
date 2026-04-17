@@ -65,6 +65,10 @@ export class Dashboard implements OnInit {
     return isAdmin || (canMove && ticket.assignedTo === this.me);
   }
 
+  canEditData(_ticket: Ticket): boolean {
+    return this.permSvc.hasPermission(Permission.TicketsEdit as string);
+  }
+
   statuses = this.tickets.statuses();
   priorities: TicketPriority[] = this.tickets.priorities();
 
@@ -111,13 +115,14 @@ export class Dashboard implements OnInit {
     try {
       const updated = await this.tickets.update(ticket.id, { status }, this.me);
       if (updated) this.selectedTicket.set(updated);
+      this.msg.add({ severity: 'success', summary: 'Ticket movido', detail: `Estado actualizado a "${status}".` });
     } catch (e: any) {
-      this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo mover el ticket' });
+      this.msg.add({ severity: 'error', summary: 'Error al mover', detail: e?.message ?? 'No se pudo mover el ticket' });
     }
   }
 
   async updatePriority(ticket: Ticket, priority: TicketPriority) {
-    if (!this.canEditTicket(ticket)) return;
+    if (!this.canEditData(ticket)) return;
     try {
       const updated = await this.tickets.update(ticket.id, { priority }, this.me);
       if (updated) this.selectedTicket.set(updated);
@@ -134,15 +139,33 @@ export class Dashboard implements OnInit {
     } catch { /* silencioso */ }
   }
 
+  private checkCanMove(ticket: Ticket): boolean {
+    const hasMove = this.permSvc.hasPermission(Permission.TicketsMove as string);
+    const hasEdit = this.permSvc.hasPermission(Permission.TicketsEdit as string);
+    if (!hasMove && !hasEdit) {
+      this.msg.add({ severity: 'warn', summary: 'Sin permiso', detail: 'No tienes permiso para mover tickets.' });
+      return false;
+    }
+    if (!hasEdit && ticket.assignedTo !== this.me) {
+      this.msg.add({ severity: 'warn', summary: 'No asignado', detail: 'Solo puedes mover tickets que te están asignados.' });
+      return false;
+    }
+    return true;
+  }
+
   async moveNext(ticket: Ticket) {
-    if (!this.canEditTicket(ticket)) return;
+    if (!this.checkCanMove(ticket)) return;
     const order: TicketStatus[] = ['pending', 'in_progress', 'review', 'done'];
     const idx = order.indexOf(ticket.status as TicketStatus);
-    if (idx >= 0 && idx < order.length - 1) await this.changeStatus(ticket, order[idx + 1]);
+    if (idx < 0 || idx >= order.length - 1) {
+      this.msg.add({ severity: 'info', summary: 'Sin siguiente estado', detail: 'El ticket ya está en su estado final.' });
+      return;
+    }
+    await this.changeStatus(ticket, order[idx + 1]);
   }
 
   dragStart(ticket: Ticket) {
-    if (!this.canEditTicket(ticket)) return;
+    if (!this.checkCanMove(ticket)) return;
     this.dragged.set(ticket);
   }
 
@@ -151,6 +174,10 @@ export class Dashboard implements OnInit {
   async drop(status: TicketStatus) {
     const ticket = this.dragged();
     if (!ticket) return;
+    if (!this.checkCanMove(ticket)) {
+      this.dragged.set(null);
+      return;
+    }
     await this.changeStatus(ticket, status);
     this.dragged.set(null);
   }
@@ -255,7 +282,7 @@ export class Dashboard implements OnInit {
     }
   };
 
-  readonly chartBarOptions = {
+  readonly chartBarOptions: Record<string, any> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
@@ -265,6 +292,22 @@ export class Dashboard implements OnInit {
       x: { ticks: { color: '#64748b', maxRotation: 0, autoSkip: false, font: { size: 11 } }, grid: { display: false } }
     }
   };
+
+  readonly chartGroupData = computed(() => {
+    const allGroups = this.groups.list();
+    if (allGroups.length < 2) return null;
+    const colors = ['#3b82f6', '#f59e0b', '#22c55e', '#ef4444', '#8b5cf6', '#f97316', '#06b6d4'];
+    return {
+      labels: allGroups.map(g => g.nombre),
+      datasets: [{
+        label: 'Tickets',
+        data: allGroups.map(g => this.tickets.listByGroup(g.id).length),
+        backgroundColor: allGroups.map((_, i) => colors[i % colors.length]),
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    };
+  });
 
   highlightValue(label: string): number {
     const s = this.ticketStats();
@@ -284,10 +327,6 @@ export class Dashboard implements OnInit {
 
   async ngOnInit() {
     await this.groups.load();
-    const groupId = this.ctx.get();
-    if (groupId) {
-      await this.tickets.loadByGroup(groupId);
-    }
   }
 
   goSelect() { this.router.navigate(['/group-select']); }

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -71,6 +71,8 @@ export class TicketCreate {
     dueDate: [null]
   });
 
+  loading = signal(false);
+
   get f() {
     return this.form.controls;
   }
@@ -80,6 +82,7 @@ export class TicketCreate {
   }
 
   async submit() {
+    if (this.loading()) return;
     const groupId = this.ctx.get();
     const author = this.auth.getCurrentUser()?.email ?? 'system';
     if (!groupId) {
@@ -94,6 +97,15 @@ export class TicketCreate {
     }
 
     const value = this.form.value;
+
+    const duplicate = this.tickets.listByGroup(groupId)
+      .find(t => t.title.trim().toLowerCase() === value.title!.trim().toLowerCase());
+    if (duplicate) {
+      this.msg.add({ severity: 'warn', summary: 'Ticket ya existente', detail: `Ya existe un ticket con el título "${duplicate.title}" en este grupo.` });
+      return;
+    }
+
+    this.loading.set(true);
     try {
       await this.tickets.create(groupId, author, {
         title: value.title!,
@@ -107,6 +119,8 @@ export class TicketCreate {
       setTimeout(() => this.router.navigate(['/dashboard']), 400);
     } catch (e: any) {
       this.msg.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo crear el ticket' });
+    } finally {
+      this.loading.set(false);
     }
   }
 }

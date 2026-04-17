@@ -66,6 +66,7 @@
           <th pSortableColumn="status" style="width:130px">Estado <p-sortIcon field="status"></p-sortIcon></th>
           <th pSortableColumn="priority" style="width:120px">Prioridad <p-sortIcon field="priority"></p-sortIcon></th>
           <th pSortableColumn="assignedTo">Asignado a <p-sortIcon field="assignedTo"></p-sortIcon></th>
+          <th pSortableColumn="groupId" style="width:140px">Grupo <p-sortIcon field="groupId"></p-sortIcon></th>
           <th pSortableColumn="dueDate" style="width:110px">F. límite <p-sortIcon field="dueDate"></p-sortIcon></th>
           <th pSortableColumn="createdAt" style="width:130px">Creado <p-sortIcon field="createdAt"></p-sortIcon></th>
         </tr>
@@ -93,6 +94,7 @@
             </div>
             <ng-template #noAssignee><span class="tl-unassigned">Sin asignar</span></ng-template>
           </td>
+          <td class="tl-group">{{ groupName(row.groupId) }}</td>
           <td class="tl-date">
             <span *ngIf="row.dueDate" [class.tl-overdue]="row.dueDate < today">
               <i class="pi pi-calendar" style="font-size:0.75rem;margin-right:3px"></i>
@@ -105,7 +107,7 @@
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="7">
+        <tr><td colspan="8">
           <div class="tl-empty">
             <i class="pi pi-inbox"></i>
             <p>No hay tickets para mostrar.</p>

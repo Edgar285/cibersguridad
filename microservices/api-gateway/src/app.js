@@ -140,6 +140,9 @@ async function buildGateway() {
       const methodMatch = r.method === '*' || r.method === method;
       if (!methodMatch) return false;
       if (!url.startsWith(r.pathPrefix)) return false;
+      // Verificar que el carácter siguiente al prefijo sea '/', '?' o fin de URL
+      const afterPrefix = url.slice(r.pathPrefix.length);
+      if (afterPrefix && !afterPrefix.startsWith('/') && !afterPrefix.startsWith('?')) return false;
       // Si la ruta tiene pathSuffix, el URL debe terminar con ese sufijo
       if (r.pathSuffix) return url.endsWith(r.pathSuffix);
       return true;
