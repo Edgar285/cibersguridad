@@ -13,8 +13,26 @@ Frontend + Backend (monorepo):
 ÚLTIMO COMMIT
 ================================================================
 
-Mensaje: feat(extra): logs centralizados y metricas en Supabase - logRequest, logError, GET /metrics
-Hash: cead9d2
+Mensaje: fix: interceptor HTTP, duplicacion tickets, UX permisos mover, loading crear ticket, rate limit 429, columna grupo, grafico dashboard
+Hash: ddd71c6
+
+================================================================
+CORRECCIONES Y OBSERVACIONES DEL DOCENTE APLICADAS
+================================================================
+
+Todos los bugs, omisiones y observaciones de UX fueron corregidos:
+
+  - ApiService centralizado: interceptor HTTP con auto-token JWT, manejo de 401 (logout) y 429 (toast UX)
+  - Servicio de tickets: reescrito con ApiService, deduplicación de tickets por ID
+  - GroupService y PermissionService: migrados a ApiService
+  - TicketCreate: signal de loading, validación de título duplicado antes de enviar al backend
+  - DashboardComponent: checkCanMove() corregido, toasts de UX, gráficos de dona y barras
+  - Columna "Grupo" agregada en lista de tickets
+  - Permisos reactivos: PermissionService usa signal, directiva y sidebar reaccionan a refreshPermissionsForGroup
+  - Acciones rápidas del dashboard sin duplicados
+  - Navegación al crear ticket corregida
+  - Seed actualizado: usa email en assignedTo para coincidir con currentUser.email en frontend
+  - Botones ocultados/eliminados del DOM según permisos (appHasPermission)
 
 ================================================================
 ARQUITECTURA DE MICROSERVICIOS (local)
